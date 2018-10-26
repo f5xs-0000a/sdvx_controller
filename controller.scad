@@ -3,7 +3,7 @@
 
 button_thickness = 3;
 frame_thickness = 6;
-button_design_acrylic_thickness = frame_thickness;
+button_design_acrylic_thickness = frame_thickness; // unimplemented
 
 include_button_border = false; // true is still unimplemented
 
@@ -154,10 +154,18 @@ module rainbow(angle, alpha = 1) {
 }
 
 // Joins objects that are close together given a specific merging distance
+// Use this instead of union() in case there is a space between objects that
+// should be joined
 module join_close_objects(
-    distance
+    distance = 0.0625
 ) {
     offset(delta = -distance ) offset( delta = distance ) union() children();
+}
+
+module clean_flashes(
+    distance = 0.0625
+) {
+    join_close_objects(-distance) children();
 }
 
 // Creates a linear array of objects
@@ -238,13 +246,11 @@ module side_fingers(
         count,
         flush_gap
     ) {
-        allowance = 0.0625;
-
         for ( i = [1 : 1 : 2 * count - 1] ) {
             translate([
-                -allowance / 2,
+                0,
                 i / (count * 2) - flush_gap / 2
-            ]) square([1 + allowance, flush_gap]);
+            ]) square([1, flush_gap]);
         }
     }
 
@@ -255,7 +261,7 @@ module side_fingers(
             -dims[1] / 2
         ]) scale([
             thickness, dims[1]
-        ]) difference() {
+        ]) clean_flashes() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[1]);
@@ -272,7 +278,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) difference() {
+        ]) clean_flashes() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[0]);
@@ -290,7 +296,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[1]
-        ]) difference() {
+        ]) clean_flashes() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[1]);
@@ -308,55 +314,12 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) difference() {
+        ]) clean_flashes() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[0]);
         }
     }
-}
-
-// Creates the extension for the fingers at the corner. This is limited to only
-// extrusions
-module corner_fingers(
-    dims,
-    thickness
-) {
-    // bottom-left corner
-    translate([
-        -(dims[0] + thickness) / 2,
-        -(dims[1] + thickness) / 2,
-    ]) square(
-        thickness,
-        true
-    );
-
-    // top-left corner
-    translate([
-        -(dims[0] + thickness) / 2,
-        (dims[1] + thickness) / 2,
-    ]) square(
-        thickness,
-        true
-    );
-
-    // top-right corner
-    translate([
-        (dims[0] + thickness) / 2,
-        (dims[1] + thickness) / 2,
-    ]) square(
-        thickness,
-        true
-    );
-
-    // bottom-right corner
-    translate([
-        (dims[0] + thickness) / 2,
-        -(dims[1] + thickness) / 2,
-    ]) square(
-        thickness,
-        true
-    );
 }
 
 // Creates the BT button (a simple square)
@@ -512,19 +475,17 @@ module front_back_frame_rect() {
 
 module bottom_frame() {
     // prepare the frame with the fingers
-    join_close_objects(0.25) {
-        top_bottom_frame_rect();
+    //clean_flashes()
+    difference() {
+        offset(
+            delta = frame_thickness
+        ) top_bottom_frame_rect();
 
         side_fingers(
             top_bottom_frame_dimensions,
             frame_thickness,
             2,
-            false
-        );
-
-        corner_fingers(
-            top_bottom_frame_dimensions,
-            frame_thickness
+            true
         );
     }
 }
@@ -799,94 +760,94 @@ module st_bridge() {
     st_bridge_path();
 }
 
-/*
-// position everything
-rainbow(sqrt(3) / 15, 1/3) {
-    // top frame
-    linear_extrude(
-        height = frame_thickness
-    ) top_frame();
-    
-    // bottom frame
-    translate([
-        0,
-        0,
-        -height,
-    ]) rotate(
-        180,
-        [0, 1]
-    ) linear_extrude(
-        height = frame_thickness
-    ) bottom_frame();
+module everything() {
+    // position everything
+    rainbow(sqrt(3) / 15, 1/3) {
+        // top frame
+        linear_extrude(
+            height = frame_thickness
+        ) top_frame();
+        
+        // bottom frame
+        translate([
+            0,
+            0,
+            -height,
+        ]) rotate(
+            180,
+            [0, 1]
+        ) linear_extrude(
+            height = frame_thickness
+        ) bottom_frame();
 
-    // left frame
-    translate([
-        -top_bottom_frame_dimensions[0] / 2,
-        0,
-    ]) rotate(
-        270,
-        [0, 1]
-    ) translate([
-        -height / 2,
-        0,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) left_right_frame();
+        // left frame
+        translate([
+            -top_bottom_frame_dimensions[0] / 2,
+            0,
+        ]) rotate(
+            270,
+            [0, 1]
+        ) translate([
+            -height / 2,
+            0,
+        ]) linear_extrude(
+            height = frame_thickness
+        ) left_right_frame();
 
-    // right frame
-    translate([
-        top_bottom_frame_dimensions[0] / 2,
-        0,
-    ]) rotate(
-        90,
-        [0, 1]
-    ) translate([
-        height / 2,
-        0,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) left_right_frame();
+        // right frame
+        translate([
+            top_bottom_frame_dimensions[0] / 2,
+            0,
+        ]) rotate(
+            90,
+            [0, 1]
+        ) translate([
+            height / 2,
+            0,
+        ]) linear_extrude(
+            height = frame_thickness
+        ) left_right_frame();
 
-    // front frame
-    translate([
-        0,
-        top_bottom_frame_dimensions[1] / 2,
-    ]) rotate(
-        270,
-        [1, 0]
-    )
-    translate([
-        0,
-        height / 2,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) front_frame();
+        // front frame
+        translate([
+            0,
+            top_bottom_frame_dimensions[1] / 2,
+        ]) rotate(
+            270,
+            [1, 0]
+        )
+        translate([
+            0,
+            height / 2,
+        ]) linear_extrude(
+            height = frame_thickness
+        ) front_frame();
 
-    // back frame
-    translate([
-        0,
-        -top_bottom_frame_dimensions[1] / 2,
-    ])
-    rotate(
-        90,
-        [1, 0]
-    ) translate([
-        0,
-        - height / 2,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) back_frame();
+        // back frame
+        translate([
+            0,
+            -top_bottom_frame_dimensions[1] / 2,
+        ])
+        rotate(
+            90,
+            [1, 0]
+        ) translate([
+            0,
+            - height / 2,
+        ]) linear_extrude(
+            height = frame_thickness
+        ) back_frame();
 
-    // bt bridge
-    bt_bridge();
+        // bt bridge
+        bt_bridge();
 
-    // fx bridge
-    fx_bridge();
+        // fx bridge
+        fx_bridge();
 
-    // st bridge
-    st_bridge();
+        // st bridge
+        st_bridge();
+    }
 }
-*/
 
 module bt_buttoncap_top() {
     // we'll need a button
@@ -1018,3 +979,5 @@ Heirarchy of needs:
         > Back-left corner
         > Back-right corner
 */
+
+everything();
