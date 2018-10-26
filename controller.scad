@@ -211,7 +211,8 @@ module side_fingers(
     thickness,
     count,
     flip,
-    sides = [true, true, true, true]
+    sides = [true, true, true, true],
+    flush_gap = flush_gap
 ) {
     // Creates fingers on the square from origin to [1, 1], to be scaled up as
     // needed
@@ -231,7 +232,22 @@ module side_fingers(
             ]);
         }
     }
-    
+
+    // Creates the gaps between the fingers.
+    module standard_side_finger_gaps(
+        count,
+        flush_gap
+    ) {
+        allowance = 0.0625;
+
+        for ( i = [1 : 1 : 2 * count - 1] ) {
+            translate([
+                -allowance / 2,
+                i / (count * 2) - flush_gap / 2
+            ]) square([1 + allowance, flush_gap]);
+        }
+    }
+
     // start with left
     if (sides[0]) {
         translate([
@@ -239,7 +255,11 @@ module side_fingers(
             -dims[1] / 2
         ]) scale([
             thickness, dims[1]
-        ]) standard_side_fingers(count, flip);
+        ]) difference() {
+            standard_side_fingers(count, flip);
+            
+            standard_side_finger_gaps(count, flush_gap / dims[1]);
+        }
     }
     
     // then with bottom
@@ -247,13 +267,16 @@ module side_fingers(
         translate([
             dims[0] / 2,
             -dims[1] / 2 - thickness,
-        ])
-        rotate(
+        ]) rotate(
             90,
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) standard_side_fingers(count, flip);
+        ]) difference() {
+            standard_side_fingers(count, flip);
+            
+            standard_side_finger_gaps(count, flush_gap / dims[0]);
+        }
     }
     
     // then with right
@@ -267,7 +290,11 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[1]
-        ]) standard_side_fingers(count, flip);
+        ]) difference() {
+            standard_side_fingers(count, flip);
+            
+            standard_side_finger_gaps(count, flush_gap / dims[1]);
+        }
     }
     
     // then with top
@@ -281,7 +308,11 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) standard_side_fingers(count, flip);
+        ]) difference() {
+            standard_side_fingers(count, flip);
+            
+            standard_side_finger_gaps(count, flush_gap / dims[0]);
+        }
     }
 }
 
@@ -768,6 +799,7 @@ module st_bridge() {
     st_bridge_path();
 }
 
+/*
 // position everything
 rainbow(sqrt(3) / 15, 1/3) {
     // top frame
@@ -854,6 +886,7 @@ rainbow(sqrt(3) / 15, 1/3) {
     // st bridge
     st_bridge();
 }
+*/
 
 module bt_buttoncap_top() {
     // we'll need a button
