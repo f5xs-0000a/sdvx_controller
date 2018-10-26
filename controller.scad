@@ -261,7 +261,7 @@ module side_fingers(
             -dims[1] / 2
         ]) scale([
             thickness, dims[1]
-        ]) clean_flashes() {
+        ]) clean_flashes() difference() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[1]);
@@ -278,7 +278,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) clean_flashes() {
+        ]) clean_flashes() difference() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[0]);
@@ -296,7 +296,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[1]
-        ]) clean_flashes() {
+        ]) clean_flashes() difference() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[1]);
@@ -314,7 +314,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) clean_flashes() {
+        ]) clean_flashes() difference() {
             standard_side_fingers(count, flip);
             
             standard_side_finger_gaps(count, flush_gap / dims[0]);
