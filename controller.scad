@@ -1,9 +1,9 @@
 // below are parameters you can set
 // all measurements are in millimeters (mm). fuck inches.
 
-button_thickness = 4;
+button_thickness = 3;
 frame_thickness = 6;
-button_design_acrylic_thickness = 4;
+button_design_acrylic_thickness = frame_thickness;
 
 include_button_border = false; // true is still unimplemented
 
@@ -52,7 +52,9 @@ dxf_view = false;
 
 // on this section lies the supporting derived parameter
 
+mm_per_inch = 25.4;
 acrylic_density = 1.18; // grams per cubic centimeter
+cherry_frame_to_max_plunge = (0.46 - 0.2) * mm_per_inch;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -77,9 +79,9 @@ module cherry_hole() {
     
     // scale from mm to inches
     scale(
-        25.4,
-        25.4,
-        25.4
+        mm_per_inch,
+        mm_per_inch,
+        mm_per_inch
     ) {
         // make sure the center centers to the origin
         polygon([
@@ -858,12 +860,14 @@ module bt_buttoncap_top() {
     // then trim off the sides to make the fingers
     // but we only need to trim off the left and right
 
-    difference() {
+    linear_extrude(
+        height = button_thickness
+    ) difference() {
         button();
 
         side_fingers(
-            [bt_side - frame_thickness, bt_side - frame_thickness],
-            frame_thickness + flush_gap,
+            [bt_side - button_thickness * 2, bt_side - button_thickness * 2],
+            button_thickness + flush_gap,
             2,
             true
         );
@@ -881,7 +885,7 @@ module bt_buttoncap_design_top() {
     ) button();
 }
 
-bt_buttoncap_design_top();
+//bt_buttoncap_design_top();
 
 bt_buttoncap_top();
 
@@ -893,7 +897,41 @@ module bt_buttoncap_prongs() {
         // plunge distance
         // distance of the switch from the plunger base to the mount base
         // some extra distance
+
+    translate([0, 0, 15]) {
+        side_fingers(
+            [
+                bt_side - button_thickness,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            2,
+            false,
+            [false, false, false, true]
+        );
+
+        side_fingers(
+            [
+                bt_side - button_thickness,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            1,
+            false,
+            [true, false, true, false]
+        );
+
+        square(
+            [
+                bt_side - button_thickness,
+                cherry_frame_to_max_plunge
+            ],
+            true
+        );
+    }
 }
+
+bt_buttoncap_prongs();
 
 module bt_buttoncap() {
     
