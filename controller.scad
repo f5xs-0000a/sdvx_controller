@@ -879,11 +879,7 @@ module bt_buttoncap_design_top() {
     ) button();
 }
 
-//bt_buttoncap_design_top();
-
-bt_buttoncap_top();
-
-module bt_buttoncap_prongs() {
+module bt_buttoncap_side_guard() {
     // the prongs' dimensions have to be defined...
     // the height of the prongs will be the sum of...
         // the thickness of the top of the buttoncap
@@ -891,11 +887,23 @@ module bt_buttoncap_prongs() {
         // plunge distance
         // distance of the switch from the plunger base to the mount base
         // some extra distance
-
-    translate([0, 0, 15]) {
+    rotate(
+        90,
+        [0, 1, 0]
+    )
+    rotate(
+        90,
+        [0, 0, 1]
+    )
+    translate([
+        0,
+        -cherry_frame_to_max_plunge / 2
+    ])
+    linear_extrude(height = button_thickness)
+    join_close_objects() {
         side_fingers(
             [
-                bt_side - button_thickness,
+                bt_side - button_thickness * 2,
                 cherry_frame_to_max_plunge
             ],
             button_thickness,
@@ -904,20 +912,118 @@ module bt_buttoncap_prongs() {
             [false, false, false, true]
         );
 
+        // left
         side_fingers(
             [
-                bt_side - button_thickness,
+                bt_side - button_thickness * 2,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            1,
+            true,
+            [true, false, false, false]
+        );
+
+        // right
+        side_fingers(
+            [
+                bt_side - button_thickness * 2,
                 cherry_frame_to_max_plunge
             ],
             button_thickness,
             1,
             false,
-            [true, false, true, false]
+            [false, false, true, false]
         );
 
         square(
             [
-                bt_side - button_thickness,
+                bt_side - button_thickness * 2,
+                cherry_frame_to_max_plunge
+            ],
+            true
+        );
+
+        // right side
+        translate([bt_side / 2, -3.4]) // what is this -3.4?
+        scale([3, 20])
+        rotate(180, [0, 0, 1])
+        standard_snap_fit_prong();
+
+        translate([-bt_side / 2, -3.4]) // what is this -3.4?
+        scale([3, 20])
+        rotate(180, [0, 0, 1])
+        mirror([1, 0, 0])
+        standard_snap_fit_prong();
+    }
+}
+
+module standard_snap_fit_prong() {
+    scale(
+        [1, 1/10.125]
+    ) polygon([
+        [0, 0],
+        [0, 10],
+        [-0.5, 10.125],
+        [0, 11],
+        [1/3, 11],
+        [1, 0],
+    ]);
+}
+
+module bt_buttoncap_other_side() {
+    rotate(
+        90,
+        [0, 1, 0]
+    )
+    rotate(
+        90,
+        [0, 0, 1]
+    )
+    translate([
+        0,
+        -cherry_frame_to_max_plunge / 2
+    ])
+    linear_extrude(height = button_thickness)
+    join_close_objects() {
+        side_fingers(
+            [
+                bt_side - button_thickness * 2,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            2,
+            false,
+            [false, false, false, true]
+        );
+
+        // left
+        side_fingers(
+            [
+                bt_side - button_thickness * 2,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            1,
+            false,
+            [true, false, false, false]
+        );
+
+        // right
+        side_fingers(
+            [
+                bt_side - button_thickness * 2,
+                cherry_frame_to_max_plunge
+            ],
+            button_thickness,
+            1,
+            true,
+            [false, false, true, false]
+        );
+
+        square(
+            [
+                bt_side - button_thickness * 2,
                 cherry_frame_to_max_plunge
             ],
             true
@@ -925,10 +1031,47 @@ module bt_buttoncap_prongs() {
     }
 }
 
-bt_buttoncap_prongs();
-
 module bt_buttoncap() {
-    
+    // top
+    bt_buttoncap_top();
+
+    // left
+    translate([
+        -bt_side / 2,
+        0,
+    ])
+    mirror([
+        0,
+        1,
+        0
+    ])
+    bt_buttoncap_side_guard();
+
+    // right
+    translate([
+        bt_side / 2 - button_thickness,
+        0
+    ])
+    bt_buttoncap_side_guard();
+
+    // front
+    translate([
+        0,
+        bt_side / 2 - button_thickness,
+    ])
+    rotate(90, [0, 0, 1])
+    bt_buttoncap_other_side();
+
+    // back
+    translate([
+        0,
+        -bt_side / 2
+    ])
+    rotate(90, [0, 0, 1])
+    mirror([
+        0, 1, 0
+    ])
+    bt_buttoncap_other_side();
 }
 
 /*
