@@ -32,7 +32,6 @@ knob_motor_hole_diameter = 30;
 flush_gap = 0.125; // used for the gap between welds
 bt_allowance = 1; // used for the gap for the button to reduce friction
 height = 50;
-bolt_diameter = 10;
 
 front_margin = 25;
 back_margin = 25;
@@ -383,65 +382,6 @@ module knob_array( offset = true ) {
     ) children();
 }
 
-// Creates a BT cap with finger joints
-module bt_fingered_cap() {
-    difference() {
-        button_rect();
-
-        // we put allowance on the fingers so they will not be an impossibly
-        // tight fit
-        offset(
-            delta = flush_gap
-        ) side_finger_joints(
-            [bt_side, bt_side],
-            button_thickness,
-            1,
-            false,
-            false
-        );
-    }
-}
-
-// Creates a FX cap with finger joints
-module fx_fingered_cap() {
-    difference() {
-        button_rect();
-
-        // we put allowance on the fingers so they will not be an impossibly
-        // tight fit
-        // divided by two because there are two sides to offset
-        offset(
-            flush_gap / 2
-        ) side_finger_joints(
-            [fx_length, fx_width],
-            button_thickness,
-            1,
-            false,
-            false
-        );
-    }
-}
-
-// Creates a ST cap with finger joints
-module st_fingered_cap() {
-    difference() {
-        button_rect();
-
-        // we put allowance on the fingers so they will not be an impossibly
-        // tight fit
-        // divided by two because there are two sides to offset
-        offset(
-            flush_gap / 2
-        ) side_finger_joints(
-            [st_side, st_side],
-            button_thickness,
-            1,
-            false,
-            false
-        );
-    }
-}
-
 top_bottom_frame_dimensions =  [
     left_margin + knob_diameter + knob_disparity + right_margin,
 
@@ -491,7 +431,7 @@ module bottom_frame() {
 }
 
 module top_frame() {
-    offset_val = frame_thickness + flush_gap;
+    offset_val = bt_allowance;
 
     difference() {
         // why are you even going to write everything again? just use the bottom
@@ -1482,7 +1422,6 @@ Heirarchy of needs:
         > Finger joints (extruding)
             > Side
             > Corner
-        > Bolt holes
     > Front frame
         > Finger joints (extruding)
         > Cord hole
@@ -1513,11 +1452,6 @@ Heirarchy of needs:
     > Knobs
         > Disc bridge
         > Number of discs to be used given a thickness
-    > Bolt Corners
-        > Front-left corner
-        > Front-right corner
-        > Back-left corner
-        > Back-right corner
 */
 
 everything();
