@@ -323,17 +323,17 @@ module side_fingers(
 }
 
 // Creates the BT button (a simple square)
-module button() {
+module button_rect() {
     square(bt_side, true);
 }
 
 // Creates the FX button (a simple rectangle)
-module effects() {
+module effects_rect() {
     square([fx_length, fx_width], true);
 }
 
 // Creates the ST button (a simple square)
-module start() {
+module start_rect() {
     square(st_side, true);
 }
 
@@ -386,7 +386,7 @@ module knob_array( offset = true ) {
 // Creates a BT cap with finger joints
 module bt_fingered_cap() {
     difference() {
-        button();
+        button_rect();
 
         // we put allowance on the fingers so they will not be an impossibly
         // tight fit
@@ -405,7 +405,7 @@ module bt_fingered_cap() {
 // Creates a FX cap with finger joints
 module fx_fingered_cap() {
     difference() {
-        button();
+        button_rect();
 
         // we put allowance on the fingers so they will not be an impossibly
         // tight fit
@@ -425,7 +425,7 @@ module fx_fingered_cap() {
 // Creates a ST cap with finger joints
 module st_fingered_cap() {
     difference() {
-        button();
+        button_rect();
 
         // we put allowance on the fingers so they will not be an impossibly
         // tight fit
@@ -500,11 +500,11 @@ module top_frame() {
 
         // prepare the button holes
         offset( delta = offset_val ) {
-            bt_array() button();
+            bt_array() button_rect();
 
-            fx_array() effects();
+            fx_array() effects_rect();
 
-            st_array() start();
+            st_array() start_rect();
         }
 
         // prepare the knob holes
@@ -781,7 +781,7 @@ module bt_buttoncap_top() {
     linear_extrude(
         height = button_thickness
     ) difference() {
-        button();
+        button_rect();
 
         side_fingers(
             [bt_side - button_thickness * 2, bt_side - button_thickness * 2],
@@ -981,7 +981,7 @@ module fx_buttoncap_top() {
     linear_extrude(
         height = button_thickness
     ) difference() {
-        effects();
+        effects_rect();
 
         side_fingers(
             [fx_length - button_thickness * 2, fx_width - button_thickness * 2],
@@ -1174,7 +1174,7 @@ module st_buttoncap_top() {
     linear_extrude(
         height = button_thickness
     ) difference() {
-        start();
+        start_rect();
 
         side_fingers(
             [st_side - button_thickness * 2, st_side - button_thickness * 2],
