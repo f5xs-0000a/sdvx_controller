@@ -532,13 +532,25 @@ module bridge_pillar() {
         [1, 0, 0]
     )
     linear_extrude(height = frame_thickness)
-    join_close_objects(0.1) {
-        bt_strips();
-        
-        scale([ // extend the length of the pillar to the bottom
-            1,
-            -(height + frame_thickness) / frame_thickness,
-        ]) bt_single_strip_hack();
+    difference() {
+        join_close_objects(0.1) {
+            bt_strips();
+            
+            scale([ // extend the length of the pillar to the bottom
+                1,
+                -(height + frame_thickness) / frame_thickness,
+            ]) bt_single_strip_hack();
+        };
+
+        bt_array()
+        translate([
+            0,
+            -(20 - frame_thickness) / 2
+        ])
+        square([
+            bt_side / 3,
+            frame_thickness,
+        ], true);
     }
 }
 
@@ -555,9 +567,6 @@ module bt_southern_bridge_pillar() {
         -(bt_side / 2 + flush_gap)
     ]) bridge_pillar();
 }
-
-// create the fingers for the north and south pillar
-
 
 module bt_bridge_path() {
     width = bt_side + frame_thickness * 2;
@@ -937,7 +946,7 @@ module buttoncap(
 
 module everything() {
     // position everything
-    rainbow(sqrt(3) / 15, 1/3) {
+    rainbow(sqrt(3) / 15) {
         // top frame
         linear_extrude(
             height = frame_thickness
