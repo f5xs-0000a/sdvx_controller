@@ -530,7 +530,9 @@ module bridge_pillar() {
     rotate(
         90,
         [1, 0, 0]
-    ) join_close_objects(0.1) {
+    )
+    linear_extrude(height = frame_thickness)
+    join_close_objects(0.1) {
         bt_strips();
         
         scale([ // extend the length of the pillar to the bottom
@@ -550,9 +552,12 @@ module bt_northern_bridge_pillar() {
 module bt_southern_bridge_pillar() {
     translate([
         0,
-        -(bt_side / 2 + frame_thickness + flush_gap)
+        -(bt_side / 2 + flush_gap)
     ]) bridge_pillar();
 }
+
+// create the fingers for the north and south pillar
+
 
 module bt_bridge_path() {
     width = bt_side + frame_thickness * 2;
@@ -561,20 +566,48 @@ module bt_bridge_path() {
         0,
         0,
         -10 // TODO: this number is arbitrary for now; it should be calculated
-    ]) difference() {
-        // the actual bridge
-        translate([
-            0,
-            -width / 2,
-        ]) scale([
-            1,
-            width / frame_thickness,
-        ]) bt_single_strip_hack();
+    ]) linear_extrude(height = frame_thickness)
+    union() {
+        bt_array() {
+            // top finger
+            translate([
+                0,
+                (bt_side + frame_thickness) / 2
+            ])
+            square([
+                bt_side / 3,
+                frame_thickness,
+            ], true);
 
-        // the cherry holes
-        bt_array() cherry_hole();
+            // bottom finger
+            translate([
+                0,
+                -(bt_side + frame_thickness) / 2
+            ])
+            square([
+                bt_side / 3,
+                frame_thickness,
+            ], true);
+        }
 
-        // TODO: we still need to subtract the path the buttons' legs will go
+        // bridge path
+        difference() {
+            // the actual bridge
+            translate([
+                0,
+                -width / 2,
+            ])
+            offset(delta = -frame_thickness)
+            scale([
+                1,
+                width / frame_thickness,
+            ]) bt_single_strip_hack();
+
+            // the cherry holes
+            bt_array() cherry_hole();
+
+            // TODO: we still need to subtract the path the buttons' legs will go
+        }
     }
 }
 
