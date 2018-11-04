@@ -30,7 +30,7 @@ knob_disparity = 297;
 knob_motor_hole_diameter = 30;
 
 flush_gap = 0.125; // used for the gap between welds
-bt_allowance = 1; // used for the gap for the button to reduce friction
+bt_allowance = 0.5; // used for the gap for the button to reduce friction
 height = 50;
 
 front_margin = 25;
@@ -321,19 +321,23 @@ module side_fingers(
     }
 }
 
+function button_dims() = [bt_side, bt_side];
+function effects_dims() = [fx_length, fx_width];
+function start_dims() = [st_side, st_side];
+
 // Creates the BT button (a simple square)
 module button_rect() {
-    square(bt_side, true);
+    square(button_dims(), true);
 }
 
 // Creates the FX button (a simple rectangle)
 module effects_rect() {
-    square([fx_length, fx_width], true);
+    square(effects_dims(), true);
 }
 
 // Creates the ST button (a simple square)
 module start_rect() {
-    square(st_side, true);
+    square(start_dims(), true);
 }
 
 // Creates the needed transformation for the BT buttons given a reference object
@@ -713,594 +717,187 @@ module standard_snap_fit_prong() {
     ]);
 }
 
-module bt_buttoncap_top() {
-    // we'll need a button
-    // then trim off the sides to make the fingers
-    // but we only need to trim off the left and right
+module buttoncap(
+    dims,
+    button_thickness
+) {
+    module buttoncap_top() {
+        linear_extrude(
+            height = button_thickness
+        ) difference() {
+            square(dims, true);
 
-    linear_extrude(
-        height = button_thickness
-    ) difference() {
-        button_rect();
-
-        side_fingers(
-            [bt_side - button_thickness * 2, bt_side - button_thickness * 2],
-            button_thickness + flush_gap,
-            2,
-            true
-        );
+            side_fingers(
+                [dims[0] - button_thickness * 2, dims[1] - button_thickness * 2],
+                button_thickness + flush_gap,
+                2,
+                true
+            );
+        }
     }
-}
+    
+    module buttoncap_prong_side() {
+        // the prongs' dimensions have to be defined...
+        // the height of the prongs will be the sum of...
+            // the thickness of the top of the buttoncap
+            // the thickness of the design of the buttoncap
+            // plunge distance
+            // distance of the switch from the plunger base to the mount base
+            // some extra distance
+        
+        rect_dims = [
+            dims[1] - button_thickness * 2,
+            cherry_frame_to_max_plunge,
+        ];
 
-module bt_buttoncap_side_guard() {
-    // the prongs' dimensions have to be defined...
-    // the height of the prongs will be the sum of...
-        // the thickness of the top of the buttoncap
-        // the thickness of the design of the buttoncap
-        // plunge distance
-        // distance of the switch from the plunger base to the mount base
-        // some extra distance
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        // top
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
+        rotate(
+            90,
+            [0, 1, 0]
+        ) rotate(
+            90,
+            [0, 0, 1]
+        ) translate([
+            0,
+            -cherry_frame_to_max_plunge / 2
+        ]) linear_extrude(
+            height = button_thickness
+        ) join_close_objects() {
+            // top
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                2,
+                false,
+                [false, false, false, true]
+            );
 
-        // left
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [true, false, false, false]
-        );
+            // left
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                1,
+                true,
+                [true, false, false, false]
+            );
 
-        // right
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [false, false, true, false]
-        );
+            // right
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                1,
+                false,
+                [false, false, true, false]
+            );
 
-        // center
-        square(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
+            // center
+            square(rect_dims, true);
 
-        // right prong
-        translate([bt_side / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        standard_snap_fit_prong();
+            // right prong
+            translate([dims[1] / 2, -3.4]) // what is this -3.4?
+            scale([3, 20])
+            rotate(180, [0, 0, 1])
+            standard_snap_fit_prong();
 
-        // left prong
-        translate([-bt_side / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        mirror([1, 0, 0])
-        standard_snap_fit_prong();
+            // left prong
+            translate([-dims[1] / 2, -3.4]) // what is this -3.4?
+            scale([3, 20])
+            rotate(180, [0, 0, 1])
+            mirror([1, 0, 0])
+            standard_snap_fit_prong();
+        }
     }
-}
 
-module bt_buttoncap_other_side() {
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
+    module buttoncap_stub_side() {
+        rect_dims = [
+            dims[0] - button_thickness * 2,
+            cherry_frame_to_max_plunge,
+        ];
 
-        // left
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [true, false, false, false]
-        );
+        rotate(
+            90,
+            [0, 1, 0]
+        ) rotate(
+            90,
+            [0, 0, 1]
+        ) translate([
+            0,
+            -cherry_frame_to_max_plunge / 2
+        ]) linear_extrude(
+            height = button_thickness
+        ) join_close_objects() {
+            // top
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                2,
+                false,
+                [false, false, false, true]
+            );
 
-        // right
-        side_fingers(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [false, false, true, false]
-        );
+            // left
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                1,
+                false,
+                [true, false, false, false]
+            );
 
-        square(
-            [
-                bt_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
+            // right
+            side_fingers(
+                rect_dims,
+                button_thickness,
+                1,
+                true,
+                [false, false, true, false]
+            );
+
+            square(rect_dims, true);
+        }
     }
-}
 
-module bt_buttoncap() {
     // top
-    bt_buttoncap_top();
+    buttoncap_top();
 
     // left
     translate([
-        -bt_side / 2,
-        0,
-    ])
-    mirror([
+        -dims[0] / 2,
+        0
+    ]) mirror([
         0,
         1,
-        0
-    ])
-    bt_buttoncap_side_guard();
+        0,
+    ]) buttoncap_prong_side();
 
     // right
     translate([
-        bt_side / 2 - button_thickness,
+        dims[0] / 2 - button_thickness,
         0
-    ])
-    bt_buttoncap_side_guard();
+    ]) mirror([
+        0,
+        1,
+        0,
+    ]) buttoncap_prong_side();
 
     // front
     translate([
         0,
-        bt_side / 2 - button_thickness,
-    ])
-    rotate(90, [0, 0, 1])
-    bt_buttoncap_other_side();
+        dims[1] / 2 - button_thickness,
+    ]) rotate(
+        90,
+        [0, 0, 1]
+    ) buttoncap_stub_side();
 
     // back
     translate([
         0,
-        -bt_side / 2
-    ])
-    rotate(90, [0, 0, 1])
-    mirror([
+        -dims[1] / 2,
+    ]) rotate(
+        90,
+        [0, 0, 1]
+    ) mirror([
         0, 1, 0
-    ])
-    bt_buttoncap_other_side();
-}
-
-module fx_buttoncap_top() {
-    linear_extrude(
-        height = button_thickness
-    ) difference() {
-        effects_rect();
-
-        side_fingers(
-            [fx_length - button_thickness * 2, fx_width - button_thickness * 2],
-            button_thickness + flush_gap,
-            2,
-            true
-        );
-    }
-}
-
-module fx_buttoncap_side_guard() {
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2,
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        // top
-        side_fingers(
-            [
-                fx_width - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
-
-        // left
-        side_fingers(
-            [
-                fx_width - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [true, false, false, false]
-        );
-
-        // right
-        side_fingers(
-            [
-                fx_width - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [false, false, true, false]
-        );
-
-        // center
-        square(
-            [
-                fx_width - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
-
-        // right prong
-        translate([fx_width / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        standard_snap_fit_prong();
-
-        // left prong
-        translate([-fx_width / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        mirror([1, 0, 0])
-        standard_snap_fit_prong();
-    }
-}
-
-module fx_buttoncap_other_side() {
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        side_fingers(
-            [
-                fx_length - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
-
-        // left
-        side_fingers(
-            [
-                fx_length - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [true, false, false, false]
-        );
-
-        // right
-        side_fingers(
-            [
-                fx_length - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [false, false, true, false]
-        );
-
-        square(
-            [
-                fx_length - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
-    }
-}
-
-module fx_buttoncap() {
-    // top
-    fx_buttoncap_top();
-
-    // left
-    translate([
-        -fx_length / 2,
-        0,
-    ])
-    mirror([
-        0,
-        1,
-        0
-    ])
-    fx_buttoncap_side_guard();
-
-    // right
-    translate([
-        fx_length / 2 - button_thickness,
-        0
-    ])
-    fx_buttoncap_side_guard();
-
-    // front
-    translate([
-        0,
-        fx_width / 2 - button_thickness,
-    ])
-    rotate(90, [0, 0, 1])
-    fx_buttoncap_other_side();
-
-    // back
-    translate([
-        0,
-        -fx_width / 2
-    ])
-    rotate(90, [0, 0, 1])
-    mirror([
-        0, 1, 0
-    ])
-    fx_buttoncap_other_side();
-}
-
-module st_buttoncap_top() {
-    linear_extrude(
-        height = button_thickness
-    ) difference() {
-        start_rect();
-
-        side_fingers(
-            [st_side - button_thickness * 2, st_side - button_thickness * 2],
-            button_thickness + flush_gap,
-            2,
-            true
-        );
-    }
-}
-
-module st_buttoncap_side_guard() {
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2,
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        // top
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
-
-        // left
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [true, false, false, false]
-        );
-
-        // right
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [false, false, true, false]
-        );
-
-        // center
-        square(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
-
-        // right prong
-        translate([st_side / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        standard_snap_fit_prong();
-
-        // left prong
-        translate([-st_side / 2, -3.4]) // what is this -3.4?
-        scale([3, 20])
-        rotate(180, [0, 0, 1])
-        mirror([1, 0, 0])
-        standard_snap_fit_prong();
-    }
-}
-
-module st_buttoncap_other_side() {
-    rotate(
-        90,
-        [0, 1, 0]
-    )
-    rotate(
-        90,
-        [0, 0, 1]
-    )
-    translate([
-        0,
-        -cherry_frame_to_max_plunge / 2
-    ])
-    linear_extrude(height = button_thickness)
-    join_close_objects() {
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            2,
-            false,
-            [false, false, false, true]
-        );
-
-        // left
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            false,
-            [true, false, false, false]
-        );
-
-        // right
-        side_fingers(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            button_thickness,
-            1,
-            true,
-            [false, false, true, false]
-        );
-
-        square(
-            [
-                st_side - button_thickness * 2,
-                cherry_frame_to_max_plunge
-            ],
-            true
-        );
-    }
-}
-
-module st_buttoncap() {
-    // top
-    st_buttoncap_top();
-
-    // left
-    translate([
-        -st_side / 2,
-        0,
-    ])
-    mirror([
-        0,
-        1,
-        0
-    ])
-    st_buttoncap_side_guard();
-
-    // right
-    translate([
-        st_side / 2 - button_thickness,
-        0
-    ])
-    st_buttoncap_side_guard();
-
-    // front
-    translate([
-        0,
-        st_side / 2 - button_thickness,
-    ])
-    rotate(90, [0, 0, 1])
-    st_buttoncap_other_side();
-
-    // back
-    translate([
-        0,
-        -st_side / 2
-    ])
-    rotate(90, [0, 0, 1])
-    mirror([
-        0, 1, 0
-    ])
-    st_buttoncap_other_side();
+    ]) buttoncap_stub_side();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1395,17 +992,17 @@ module everything() {
         // bt
         translate([0, 0, frame_thickness - button_thickness + bt_plunge_distance])
         bt_array()
-        bt_buttoncap();
+        buttoncap(button_dims(), button_thickness);
 
         // fx
         translate([0, 0, frame_thickness - button_thickness + fx_plunge_distance])
         fx_array()
-        fx_buttoncap();
+        buttoncap(effects_dims(), button_thickness);
 
         // st
         translate([0, 0, frame_thickness - button_thickness + st_plunge_distance])
         st_array()
-        st_buttoncap();
+        buttoncap(start_dims(), button_thickness);
     }
 }
 
