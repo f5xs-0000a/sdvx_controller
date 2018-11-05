@@ -54,6 +54,14 @@ dxf_view = false;
 mm_per_inch = 25.4;
 acrylic_density = 1.18; // grams per cubic centimeter
 cherry_frame_to_max_plunge = (0.46 - 0.2) * mm_per_inch;
+cherry_plunge_depth = 0.14 * mm_per_inch;
+
+bridge_cherry_height = frame_thickness - button_thickness - cherry_frame_to_max_plunge;
+bt_bridge_height = bridge_cherry_height - frame_thickness;
+
+bt_buttoncap_height = frame_thickness - button_thickness + bt_plunge_distance;
+fx_buttoncap_height = frame_thickness - button_thickness + fx_plunge_distance;
+st_buttoncap_height = frame_thickness - button_thickness + st_plunge_distance;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -149,6 +157,57 @@ module rainbow(angle, alpha = 1) {
 
     for (i = [0: $children - 1]) {
         color(hsv(i * angle, a = alpha)) children(i);
+    }
+}
+
+module intersection_any() {
+    if ($children == 0) {
+        // do nothing
+    }
+
+    else if ($children == 1) {
+        children(0);
+    }
+
+    else {
+        for (i = [0: $children - 2]) {
+            for (j = [i + 1: $children - 1]) {
+                intersection() {
+                    children(i);
+                    children(j);
+                }
+            }
+        }
+    }
+}
+
+module cherry_mockup() {
+    Z = 0.6140;
+    P = 0.14;
+    LB = 0.2;
+    Pi = 0.13;
+    B = 0.46;
+    UB = B - 0.2;
+
+    scale(mm_per_inch) {
+        // plunger
+        translate([0, 0, UB])
+        linear_extrude(P)
+        square(Z / 2.5, true);
+
+        // upper body
+        linear_extrude(UB)
+        square(Z, true);
+
+        // lower body
+        translate([0, 0, -LB])
+        linear_extrude(LB)
+        square(Z * 0.875, true);
+
+        // pins
+        translate([0, 0, -LB - Pi])
+        linear_extrude(Pi)
+        square(Z * 0.25, true);
     }
 }
 
@@ -542,12 +601,13 @@ module bridge_pillar() {
             ]) bt_single_strip_hack();
         };
 
-        bt_array()
-        translate([
+        bt_array(
+        ) offset(
+            delta = flush_gap
+        ) translate([
             0,
-            -(20 - frame_thickness) / 2
-        ])
-        square([
+            bt_bridge_height + frame_thickness / 2,
+        ]) square([
             bt_side / 3,
             frame_thickness,
         ], true);
@@ -574,7 +634,7 @@ module bt_bridge_path() {
     translate([
         0,
         0,
-        -10 // TODO: this number is arbitrary for now; it should be calculated
+        bt_bridge_height,
     ]) linear_extrude(height = frame_thickness)
     union() {
         bt_array() {
@@ -915,10 +975,6 @@ module buttoncap(
     translate([
         dims[0] / 2 - button_thickness,
         0
-    ]) mirror([
-        0,
-        1,
-        0,
     ]) buttoncap_prong_side();
 
     // front
@@ -1030,19 +1086,21 @@ module everything() {
 
         // st bridge
         st_bridge();
+
+        translate([0, 0, bridge_cherry_height]) bt_array() cherry_mockup();
         
         // bt
-        translate([0, 0, frame_thickness - button_thickness + bt_plunge_distance])
+        translate([0, 0, bt_buttoncap_height])
         bt_array()
         buttoncap(button_dims(), button_thickness);
 
         // fx
-        translate([0, 0, frame_thickness - button_thickness + fx_plunge_distance])
+        translate([0, 0, fx_buttoncap_height])
         fx_array()
         buttoncap(effects_dims(), button_thickness);
 
         // st
-        translate([0, 0, frame_thickness - button_thickness + st_plunge_distance])
+        translate([0, 0, st_buttoncap_height])
         st_array()
         buttoncap(start_dims(), button_thickness);
     }
