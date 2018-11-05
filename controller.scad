@@ -63,6 +63,22 @@ bt_buttoncap_height = frame_thickness - button_thickness + bt_plunge_distance;
 fx_buttoncap_height = frame_thickness - button_thickness + fx_plunge_distance;
 st_buttoncap_height = frame_thickness - button_thickness + st_plunge_distance;
 
+snap_fit_scale = [3, 20];
+
+prong_hole_dims = [
+    snap_fit_scale[0],
+    button_thickness,
+];
+
+function vert_prong_hole(plunge_distance) = [
+    button_thickness,
+    snap_fit_scale[1] * 1 / 11 + plunge_distance,
+];
+
+function vert_prong_hole_offset(plunge_distance) =
+    snap_fit_scale[1] * 10 / 11 +
+    vert_prong_hole(plunge_distance)[1];
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Creates the geometry for the hole where the Cherry MX keys would be mounted
@@ -576,7 +592,7 @@ module bt_single_strip_hack() {
     ) bt_strips();
 }
 
-module bridge_pillar() {
+module bt_bridge_pillar() {
     rotate(
         90,
         [1, 0, 0]
@@ -602,6 +618,23 @@ module bridge_pillar() {
             bt_side / 3,
             frame_thickness,
         ], true);
+
+        bt_array(
+        ) offset(
+            delta = bt_allowance
+        ) {
+            vph = vert_prong_hole(bt_plunge_distance);
+
+            translate([
+                bt_side / 2 - vph[0],
+                -vert_prong_hole_offset(bt_plunge_distance)
+            ]) square(vph);
+
+            translate([
+                -(bt_side / 2),
+                -vert_prong_hole_offset(bt_plunge_distance)
+            ]) square(vph);
+        };
     }
 }
 
@@ -609,14 +642,14 @@ module bt_northern_bridge_pillar() {
     translate([
         0,
         (bt_side / 2 + frame_thickness + flush_gap)
-    ]) bridge_pillar();
+    ]) bt_bridge_pillar();
 }
 
 module bt_southern_bridge_pillar() {
     translate([
         0,
         -(bt_side / 2 + flush_gap)
-    ]) bridge_pillar();
+    ]) bt_bridge_pillar();
 }
 
 module bt_bridge_path() {
@@ -805,22 +838,23 @@ module st_bridge() {
     st_bridge_path();
 }
 
+module standard_snap_fit_prong() {
+    scale(
+        [1, 1/11]
+    ) polygon([
+        [0, 0],
+        [0, 10],
+        [-0.5, 10.125],
+        [0, 11],
+        [1/3, 11],
+        [1, 0],
+    ]);
+}
+
 module buttoncap(
     dims,
     button_thickness
 ) {
-    module standard_snap_fit_prong() {
-        scale(
-            [1, 1/10.125]
-        ) polygon([
-            [0, 0],
-            [0, 10],
-            [-0.5, 10.125],
-            [0, 11],
-            [1/3, 11],
-            [1, 0],
-        ]);
-    }
 
     module buttoncap_top() {
         linear_extrude(
@@ -894,14 +928,14 @@ module buttoncap(
             square(rect_dims, true);
 
             // right prong
-            translate([dims[1] / 2, -3.4]) // what is this -3.4?
-            scale([3, 20])
+            translate([dims[1] / 2, -3.4]) // TODO: what is this -3.4?
+            scale(snap_fit_scale)
             rotate(180, [0, 0, 1])
             standard_snap_fit_prong();
 
             // left prong
-            translate([-dims[1] / 2, -3.4]) // what is this -3.4?
-            scale([3, 20])
+            translate([-dims[1] / 2, -3.4]) // TODO: what is this -3.4?
+            scale(snap_fit_scale)
             rotate(180, [0, 0, 1])
             mirror([1, 0, 0])
             standard_snap_fit_prong();
