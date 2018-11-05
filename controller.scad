@@ -57,7 +57,7 @@ cherry_frame_to_max_plunge = (0.46 - 0.2) * mm_per_inch;
 cherry_plunge_depth = 0.14 * mm_per_inch;
 
 bridge_cherry_height = frame_thickness - button_thickness - cherry_frame_to_max_plunge;
-bt_bridge_height = bridge_cherry_height - frame_thickness;
+bridge_height = bridge_cherry_height - frame_thickness;
 
 bt_buttoncap_height = frame_thickness - button_thickness + bt_plunge_distance;
 fx_buttoncap_height = frame_thickness - button_thickness + fx_plunge_distance;
@@ -514,9 +514,6 @@ module top_frame() {
         offset( delta = flush_gap ) {
             knob_array() circle( d = knob_motor_hole_diameter );
         }
-
-        // prepare the bolt holes
-        // TODO: we still need the bolt holes
     }
 }
 
@@ -538,9 +535,6 @@ module left_right_frame() {
 
         // prepare the strap holes
         // TODO: where are the strap holes?
-
-        // prepare the bolt holes
-        // TODO: we still need the bolt holes
     }
 }
 
@@ -564,9 +558,6 @@ module front_frame() {
 
         // prepare the cord hole
         // TODO: where's the cord hole?
-
-        // prepare the bolt holes
-        // TODO: where are the bolt holes?
     }
 }
 
@@ -589,9 +580,9 @@ module bridge_pillar() {
     rotate(
         90,
         [1, 0, 0]
-    )
-    linear_extrude(height = frame_thickness)
-    difference() {
+    ) linear_extrude(
+        height = frame_thickness
+    ) difference() {
         join_close_objects(0.1) {
             bt_strips();
             
@@ -606,7 +597,7 @@ module bridge_pillar() {
             delta = flush_gap
         ) translate([
             0,
-            bt_bridge_height + frame_thickness / 2,
+            bridge_height + frame_thickness / 2,
         ]) square([
             bt_side / 3,
             frame_thickness,
@@ -634,7 +625,7 @@ module bt_bridge_path() {
     translate([
         0,
         0,
-        bt_bridge_height,
+        bridge_height,
     ]) linear_extrude(height = frame_thickness)
     union() {
         bt_array() {
@@ -712,7 +703,9 @@ module fx_bridge_pillar() {
     ) translate([
         0,
         frame_thickness / 2
-    ]) join_close_objects(0.1) {
+    ]) linear_extrude(
+        height = frame_thickness
+    ) join_close_objects(0.1) {
         fx_strips( false );
         
         translate([
@@ -728,14 +721,14 @@ module fx_bridge_pillar() {
 module fx_northern_bridge_pillar() {
     translate([
         0,
-        fx_width / 2 + frame_thickness
+        fx_width / 2 + frame_thickness + flush_gap
     ]) fx_bridge_pillar();
 }
 
 module fx_southern_bridge_pillar() {
     translate([
         0,
-        -(fx_width / 2 + frame_thickness)
+        -(fx_width / 2 + flush_gap)
     ]) fx_bridge_pillar();
 }
 
@@ -745,8 +738,10 @@ module fx_bridge_path() {
     translate([
         0,
         -bt_center_to_fx_center + fx_width / 2 - frame_thickness * 2,
-        -10 // todo: this number is arbitrary for now; it should be calculated
-    ]) difference() {
+        bridge_height,
+    ]) linear_extrude(
+        height = frame_thickness
+    ) difference() {
         scale([
             1,
             width / frame_thickness,
@@ -768,21 +763,23 @@ module st_bridge_pillar() {
         [1, 0, 0]
     ) translate([
         0,
-        -(height - frame_thickness)/ 2,
-    ]) square([st_side + frame_thickness * 2, height + frame_thickness], true);
+        -(height - frame_thickness) / 2,
+    ]) linear_extrude(
+        height = frame_thickness
+    ) square([st_side + frame_thickness * 2, height + frame_thickness], true);
 }
 
 module northern_st_bridge_pillar() {
     translate([
         0,
-        bt_center_to_st_center + (st_side + frame_thickness + button_thickness) / 2,
+        bt_center_to_st_center + st_side / 2 + frame_thickness + flush_gap
     ]) st_bridge_pillar();
 }
 
 module southern_st_bridge_pillar() {
     translate([
         0,
-        bt_center_to_st_center - (st_side + frame_thickness + button_thickness) / 2,
+        bt_center_to_st_center - st_side / 2 - flush_gap
     ]) st_bridge_pillar();
 }
 
@@ -792,8 +789,10 @@ module st_bridge_path() {
     translate([
         0,
         bt_center_to_st_center + st_side / 2 - frame_thickness * 2,
-        -10 // todo: this number is arbitrary for now; it should be calculated
-    ]) difference() {
+        bridge_height,
+    ]) linear_extrude(
+        height = frame_thickness
+    ) difference() {
         square(st_side + frame_thickness * 2, true);
 
         st_array(false) cherry_hole();
@@ -806,23 +805,23 @@ module st_bridge() {
     st_bridge_path();
 }
 
-module standard_snap_fit_prong() {
-    scale(
-        [1, 1/10.125]
-    ) polygon([
-        [0, 0],
-        [0, 10],
-        [-0.5, 10.125],
-        [0, 11],
-        [1/3, 11],
-        [1, 0],
-    ]);
-}
-
 module buttoncap(
     dims,
     button_thickness
 ) {
+    module standard_snap_fit_prong() {
+        scale(
+            [1, 1/10.125]
+        ) polygon([
+            [0, 0],
+            [0, 10],
+            [-0.5, 10.125],
+            [0, 11],
+            [1/3, 11],
+            [1, 0],
+        ]);
+    }
+
     module buttoncap_top() {
         linear_extrude(
             height = button_thickness
