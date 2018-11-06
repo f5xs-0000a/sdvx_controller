@@ -31,7 +31,7 @@ knob_motor_hole_diameter = 30;
 
 flush_gap = 0.125; // used for the gap between welds
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
-height = 50;
+height = 35;
 
 front_margin = 25;
 back_margin = 25;
@@ -253,7 +253,7 @@ module linear_array(
         for (j = [0 : 1 : y_copies - 1]) {
             translate([
                 x_distance * i,
-                y_distance * i,
+                y_distance * j,
                 0,
             ]) {
                 children();
@@ -577,19 +577,12 @@ module front_frame() {
     }
 }
 
-module bt_strips() {
+module bt_strips(height = frame_thickness) {
     translate([
         0,
         frame_thickness / 2,
     ]) bt_array(
-    ) square([frame_thickness * 2 + bt_side, frame_thickness], true);
-}
-
-module bt_single_strip_hack() {
-    join_close_objects( // this is the hack just to combine the strips
-    // into a single strip
-        8 // TODO: we need a better, calculated number than 8
-    ) bt_strips();
+    ) square([frame_thickness * 2 + bt_side, height], true);
 }
 
 module bt_bridge_pillar() {
@@ -599,15 +592,17 @@ module bt_bridge_pillar() {
     ) linear_extrude(
         height = frame_thickness
     ) difference() {
-        join_close_objects(0.1) {
+        join_close_objects() {
             bt_strips();
             
-            scale([ // extend the length of the pillar to the bottom
-                1,
-                -(height + frame_thickness) / frame_thickness,
-            ]) bt_single_strip_hack();
+            join_close_objects(
+                (bt_center_disparity - bt_side) / 2
+            ) translate(
+                [0, -(height + frame_thickness) / 2]
+            ) bt_strips(height);
         };
 
+        // add the hole for the fingers of the bridge path
         bt_array(
         ) offset(
             delta = flush_gap
@@ -615,10 +610,11 @@ module bt_bridge_pillar() {
             0,
             bridge_height + frame_thickness / 2,
         ]) square([
-            bt_side / 3,
-            frame_thickness,
+            bt_side / 3 + flush_gap,
+            frame_thickness + flush_gap,
         ], true);
 
+        // add the vertical hole for the snap fit prongs
         bt_array(
         ) offset(
             delta = bt_allowance
@@ -641,65 +637,66 @@ module bt_bridge_pillar() {
 module bt_northern_bridge_pillar() {
     translate([
         0,
-        (bt_side / 2 + frame_thickness + flush_gap)
+        (bt_side / 2 + frame_thickness + bt_allowance)
     ]) bt_bridge_pillar();
 }
 
 module bt_southern_bridge_pillar() {
     translate([
         0,
-        -(bt_side / 2 + flush_gap)
+        -(bt_side / 2 + bt_allowance)
     ]) bt_bridge_pillar();
 }
 
 module bt_bridge_path() {
-    width = bt_side + frame_thickness * 2;
+    width = bt_side ;// + frame_thickness * 2;
     
-    translate([
-        0,
-        0,
-        bridge_height,
-    ]) linear_extrude(height = frame_thickness)
     union() {
         bt_array() {
-            // top finger
-            translate([
+            // fingers, front and back
+            // the linear array creates the two fingers
+            // TODO: math doesn't check out.
+            linear_array(
+                1,
+                2,
+                0,
+                -bt_side - frame_thickness
+            ) translate([
                 0,
                 (bt_side + frame_thickness) / 2
-            ])
-            square([
+            ]) square([
                 bt_side / 3,
-                frame_thickness,
-            ], true);
-
-            // bottom finger
-            translate([
-                0,
-                -(bt_side + frame_thickness) / 2
-            ])
-            square([
-                bt_side / 3,
-                frame_thickness,
+                frame_thickness + bt_allowance * 2,
             ], true);
         }
 
         // bridge path
         difference() {
             // the actual bridge
-            translate([
-                0,
-                -width / 2,
-            ])
-            offset(delta = -frame_thickness)
-            scale([
-                1,
-                width / frame_thickness,
-            ]) bt_single_strip_hack();
+            join_close_objects(
+                (bt_center_disparity - bt_side) / 2
+            ) bt_array(
+            ) square(
+                button_dims() + [bt_allowance * 2, bt_allowance * 2],
+                true
+            );
 
             // the cherry holes
             bt_array() cherry_hole();
 
-            // TODO: we still need to subtract the path the buttons' legs will go
+            // the leg holes
+            bt_array()
+            translate([
+                -bt_side / 2,
+                -bt_side / 2,
+            ]) offset(
+                delta = bt_allowance
+            ) linear_array(
+                2,
+                2,
+                bt_side - prong_hole_dims[0],
+                bt_side - prong_hole_dims[1]
+            ) square(prong_hole_dims);
         }
     }
 }
@@ -707,7 +704,15 @@ module bt_bridge_path() {
 module bt_bridge() {
     bt_northern_bridge_pillar();
     bt_southern_bridge_pillar();
-    bt_bridge_path();
+
+    // bridge path
+    translate([
+        0,
+        0,
+        bridge_height,
+    ]) linear_extrude(
+        height = frame_thickness
+    ) bt_bridge_path();
 }
 
 module fx_strips( offset = true ) {
