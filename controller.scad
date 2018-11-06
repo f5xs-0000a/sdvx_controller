@@ -578,11 +578,11 @@ module front_frame() {
 }
 
 module bt_strips(height = frame_thickness) {
-    translate([
+    bt_array(
+    ) translate([
         0,
-        frame_thickness / 2,
-    ]) bt_array(
-    ) square([frame_thickness * 2 + bt_side, height], true);
+        height / 2
+    ]) square([frame_thickness * 2 + bt_side, height], true);
 }
 
 module bt_bridge_pillar() {
@@ -593,13 +593,23 @@ module bt_bridge_pillar() {
         height = frame_thickness
     ) difference() {
         join_close_objects() {
+            // the finger extrusions towards the top frame
             bt_strips();
             
+            // main body of the pillar
             join_close_objects(
                 (bt_center_disparity - bt_side) / 2
-            ) translate(
-                [0, -(height + frame_thickness) / 2]
-            ) bt_strips(height);
+            ) translate([
+                0,
+                -(height - frame_thickness)
+            ]) bt_strips(height - frame_thickness);
+
+            // the finger extrusions towards the bottom frame
+            bt_array(
+            ) translate([
+                0,
+                -(height - frame_thickness / 2)
+            ]) square([bt_side / 3, frame_thickness], true);
         };
 
         // add the hole for the fingers of the bridge path
@@ -632,20 +642,6 @@ module bt_bridge_pillar() {
             ]) square(vph);
         };
     }
-}
-
-module bt_northern_bridge_pillar() {
-    translate([
-        0,
-        (bt_side / 2 + frame_thickness + bt_allowance)
-    ]) bt_bridge_pillar();
-}
-
-module bt_southern_bridge_pillar() {
-    translate([
-        0,
-        -(bt_side / 2 + bt_allowance)
-    ]) bt_bridge_pillar();
 }
 
 module bt_bridge_path() {
@@ -702,8 +698,17 @@ module bt_bridge_path() {
 }
 
 module bt_bridge() {
-    bt_northern_bridge_pillar();
-    bt_southern_bridge_pillar();
+    // northern bridge
+    translate([
+        0,
+        (bt_side / 2 + frame_thickness + bt_allowance)
+    ]) bt_bridge_pillar();
+
+    // southern bridge
+    translate([
+        0,
+        -(bt_side / 2 + bt_allowance)
+    ]) bt_bridge_pillar();
 
     // bridge path
     translate([
@@ -1040,7 +1045,8 @@ module buttoncap(
 
 module everything() {
     // position everything
-    rainbow(sqrt(3) / 15) {
+    rainbow(sqrt(3) / 15, 0.5) {
+        /*
         // top frame
         linear_extrude(
             height = frame_thickness
@@ -1115,6 +1121,7 @@ module everything() {
         ]) linear_extrude(
             height = frame_thickness
         ) back_frame();
+        */
 
         // bt bridge
         bt_bridge();
