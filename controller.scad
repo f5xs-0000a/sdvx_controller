@@ -29,7 +29,6 @@ knob_diameter = 30;
 knob_disparity = 297;
 knob_motor_hole_diameter = 30;
 
-flush_gap = 0.125; // used for the gap between welds
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
 height = 35;
 
@@ -294,7 +293,6 @@ module side_fingers(
     count,
     flip,
     sides = [true, true, true, true],
-    flush_gap = flush_gap
 ) {
     // Creates fingers on the square from origin to [1, 1], to be scaled up as
     // needed
@@ -315,19 +313,6 @@ module side_fingers(
         }
     }
 
-    // Creates the gaps between the fingers.
-    module standard_side_finger_gaps(
-        count,
-        flush_gap
-    ) {
-        for ( i = [1 : 1 : 2 * count - 1] ) {
-            translate([
-                0,
-                i / (count * 2) - flush_gap / 2
-            ]) square([1, flush_gap]);
-        }
-    }
-
     // start with left
     if (sides[0]) {
         translate([
@@ -335,11 +320,7 @@ module side_fingers(
             -dims[1] / 2
         ]) scale([
             thickness, dims[1]
-        ]) clean_flashes() difference() {
-            standard_side_fingers(count, flip);
-            
-            standard_side_finger_gaps(count, flush_gap / dims[1]);
-        }
+        ]) standard_side_fingers(count, flip);
     }
     
     // then with bottom
@@ -352,11 +333,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) clean_flashes() difference() {
-            standard_side_fingers(count, flip);
-            
-            standard_side_finger_gaps(count, flush_gap / dims[0]);
-        }
+        ]) standard_side_fingers(count, flip);
     }
     
     // then with right
@@ -370,11 +347,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[1]
-        ]) clean_flashes() difference() {
-            standard_side_fingers(count, flip);
-            
-            standard_side_finger_gaps(count, flush_gap / dims[1]);
-        }
+        ]) standard_side_fingers(count, flip);
     }
     
     // then with top
@@ -388,11 +361,7 @@ module side_fingers(
             [0, 0, 1]
         ) scale([
             thickness, dims[0]
-        ]) clean_flashes() difference() {
-            standard_side_fingers(count, flip);
-            
-            standard_side_finger_gaps(count, flush_gap / dims[0]);
-        }
+        ]) standard_side_fingers(count, flip);
     }
 }
 
@@ -527,14 +496,12 @@ module top_frame() {
         }
 
         // prepare the knob holes
-        offset( delta = flush_gap ) {
-            knob_array() circle( d = knob_motor_hole_diameter );
-        }
+        knob_array() circle( d = knob_motor_hole_diameter );
     }
 }
 
 module left_right_frame() {
-    offset_val = frame_thickness + flush_gap;
+    offset_val = frame_thickness;
 
     difference() {
         // prepare the frame with the fingers
@@ -614,14 +581,12 @@ module bt_bridge_pillar() {
 
         // add the hole for the fingers of the bridge path
         bt_array(
-        ) offset(
-            delta = flush_gap
         ) translate([
             0,
             bridge_height + frame_thickness / 2,
         ]) square([
-            bt_side / 3 + flush_gap,
-            frame_thickness + flush_gap,
+            bt_side / 3,
+            frame_thickness,
         ], true);
 
         // add the vertical hole for the snap fit prongs
@@ -764,14 +729,14 @@ module fx_bridge_pillar() {
 module fx_northern_bridge_pillar() {
     translate([
         0,
-        fx_width / 2 + frame_thickness + flush_gap
+        fx_width / 2 + frame_thickness
     ]) fx_bridge_pillar();
 }
 
 module fx_southern_bridge_pillar() {
     translate([
         0,
-        -(fx_width / 2 + flush_gap)
+        -fx_width / 2
     ]) fx_bridge_pillar();
 }
 
@@ -815,14 +780,14 @@ module st_bridge_pillar() {
 module northern_st_bridge_pillar() {
     translate([
         0,
-        bt_center_to_st_center + st_side / 2 + frame_thickness + flush_gap
+        bt_center_to_st_center + st_side / 2 + frame_thickness
     ]) st_bridge_pillar();
 }
 
 module southern_st_bridge_pillar() {
     translate([
         0,
-        bt_center_to_st_center - st_side / 2 - flush_gap
+        bt_center_to_st_center - st_side / 2
     ]) st_bridge_pillar();
 }
 
@@ -873,8 +838,8 @@ module buttoncap(
             square(dims, true);
 
             side_fingers(
-                [dims[0] - button_thickness * 2, dims[1] - button_thickness * 2],
-                button_thickness + flush_gap,
+                (dims - [button_thickness, button_thickness]) * 2,
+                button_thickness,
                 2,
                 true
             );
