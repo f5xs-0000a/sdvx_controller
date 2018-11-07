@@ -191,11 +191,10 @@ module start_rect() {
 module bt_array( offset = true ) {
     // offset doesn't actually do anything
 
-    linear_array_from_center(
-        4,
-        1,
-        bt_center_disparity,
-        0
+    linear_array(
+        [4, 1],
+        [bt_center_disparity, 0],
+        [true, true]
     ) children();
 }
 
@@ -204,11 +203,10 @@ module fx_array( offset = true ) {
     translate([
         0,
         offset ? -bt_center_to_fx_center : 0,
-    ]) linear_array_from_center(
-        2,
-        1,
-        fx_center_disparity,
-        0
+    ]) linear_array(
+        [2, 1],
+        [fx_center_disparity, 0],
+        [true, true]
     ) children();
 }
 
@@ -225,11 +223,10 @@ module knob_array( offset = true ) {
     translate([
         0,
         offset ? bt_center_to_knob_center : 0,
-    ]) linear_array_from_center(
-        2,
-        1,
-        knob_disparity,
-        0
+    ]) linear_array(
+        [2, 1],
+        [knob_disparity, 0],
+        [true, true]
     ) children();
 }
 
@@ -423,10 +420,8 @@ module bt_bridge_path() {
             // the linear array creates the two fingers
             // TODO: math doesn't check out.
             linear_array(
-                1,
-                2,
-                0,
-                -bt_side - frame_thickness
+                [1, 2],
+                [0, - (bt_side + frame_thickness)]
             ) translate([
                 0,
                 (bt_side + frame_thickness) / 2
@@ -460,10 +455,8 @@ module bt_bridge_path() {
             ]) offset(
                 delta = bt_allowance
             ) linear_array(
-                2,
-                2,
-                bt_side - prong_hole_dims[0],
-                bt_side - prong_hole_dims[1]
+                [2, 2],
+                prong_hole_dims - button_dims()
             ) square(prong_hole_dims);
         }
     }
@@ -565,10 +558,8 @@ module fx_bridge_path() {
             // the linear array creates the two fingers
             // TODO: math doesn't check out.
             linear_array(
-                1,
-                2,
-                0,
-                -fx_width - frame_thickness
+                [1, 2],
+                [0, - (fx_width + frame_thickness)]
             ) translate([
                 0,
                 (fx_width + frame_thickness) / 2
@@ -597,10 +588,8 @@ module fx_bridge_path() {
             ) offset(
                 delta = bt_allowance
             ) linear_array(
-                2,
-                2,
-                fx_length - prong_hole_dims[0],
-                fx_width - prong_hole_dims[1]
+                [2, 2],
+                effects_dims() - prong_hole_dims
             ) square(prong_hole_dims);
         }
     }
@@ -609,7 +598,7 @@ module fx_bridge_path() {
 module fx_bridge() {
     fx_array()
     translate([0, -fx_width / 2 - bt_allowance])
-    linear_array(1, 2, 0, fx_width + frame_thickness + bt_allowance * 2)
+    linear_array([1, 2], [0, fx_width + frame_thickness + bt_allowance * 2])
     rotate(90, [1, 0, 0])
     linear_extrude(height = frame_thickness)
     fx_bridge_pillar();
@@ -996,7 +985,7 @@ module dxf_view() {
 
         projection()
         translate([0, 375])
-        linear_array(1, 2, 0, 50)
+        linear_array([1, 2], [0, 50])
         rotate(-90, [1, 0, 0])
         bt_bridge_pillar();
 
@@ -1005,7 +994,7 @@ module dxf_view() {
 
         projection()
         translate([0, 525])
-        linear_array(2, 2, 60, 30)
+        linear_array([2, 2], [60, 30])
         fx_bridge_pillar();
 
         projection()
@@ -1014,7 +1003,7 @@ module dxf_view() {
 
         projection()
         translate([0, 675])
-        linear_array(2, 1, 50, 0)
+        linear_array([2, 1], [50, 0])
         rotate(-90, [1, 0, 0])
         st_bridge_pillar();
 }

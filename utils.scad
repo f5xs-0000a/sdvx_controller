@@ -166,44 +166,26 @@ module cherry_mockup() {
 
 // Creates a linear array of objects
 module linear_array(
-    x_copies,
-    y_copies,
-    x_distance,
-    y_distance
+    copies = [1, 1],
+    distance = [0, 0],
+    center = [false, false]
 ) {
-    for (i = [0 : 1 : x_copies - 1]) {
-        for (j = [0 : 1 : y_copies - 1]) {
+    offset = [
+        center[0] ? - (distance[0] * (copies[0] - 1)) / 2 : 0,
+        center[1] ? - (distance[1] * (copies[1] - 1)) / 2 : 0,
+    ];
+
+    translate(
+        offset
+    ) for (i = [0 : 1 : copies[0] - 1]) {
+        for (j = [0 : 1 : copies[1] - 1]) {
             translate([
-                x_distance * i,
-                y_distance * j,
+                distance[0] * i,
+                distance[1] * j,
                 0,
             ]) {
                 children();
             }
-        }
-    }
-}
-
-// Creates a linear array of objects but the whole array is centered on the
-// origin
-module linear_array_from_center(
-    x_copies,
-    y_copies,
-    x_distance,
-    y_distance
-) {
-    linear_array(
-        x_copies,
-        y_copies,
-        x_distance,
-        y_distance
-    ) {
-        translate([
-            - (x_distance * (x_copies - 1)) / 2,
-            - (y_distance * (y_copies - 1)) / 2,
-            0
-        ]) {
-            children();
         }
     }
 }
