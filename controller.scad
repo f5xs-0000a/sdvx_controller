@@ -168,23 +168,23 @@ module side_fingers(
     }
 }
 
-function button_dims() = [bt_side, bt_side];
-function effects_dims() = [fx_length, fx_width];
-function start_dims() = [st_side, st_side];
+button_dims = [bt_side, bt_side];
+effects_dims = [fx_length, fx_width];
+start_dims = [st_side, st_side];
 
 // Creates the BT button (a simple square)
 module button_rect() {
-    square(button_dims(), true);
+    square(button_dims, true);
 }
 
 // Creates the FX button (a simple rectangle)
 module effects_rect() {
-    square(effects_dims(), true);
+    square(effects_dims, true);
 }
 
 // Creates the ST button (a simple square)
 module start_rect() {
-    square(start_dims(), true);
+    square(start_dims, true);
 }
 
 // Creates the needed transformation for the BT buttons given a reference object
@@ -440,7 +440,7 @@ module bt_bridge_path() {
                 (bt_center_disparity - bt_side) / 2
             ) bt_array(
             ) square(
-                button_dims() + 2 * [bt_allowance, bt_allowance],
+                button_dims + 2 * [bt_allowance, bt_allowance],
                 true
             );
 
@@ -456,7 +456,7 @@ module bt_bridge_path() {
                 delta = bt_allowance
             ) linear_array(
                 [2, 2],
-                prong_hole_dims - button_dims()
+                prong_hole_dims - button_dims
             ) square(prong_hole_dims);
         }
     }
@@ -574,7 +574,7 @@ module fx_bridge_path() {
             // the actual bridge
             fx_array(
             ) square(
-                effects_dims() + [bt_allowance * 2, bt_allowance * 2],
+                effects_dims + [bt_allowance * 2, bt_allowance * 2],
                 true
             );
 
@@ -584,12 +584,12 @@ module fx_bridge_path() {
             // the leg holes
             fx_array()
             translate(
-                -effects_dims() / 2
+                -effects_dims / 2
             ) offset(
                 delta = bt_allowance
             ) linear_array(
                 [2, 2],
-                effects_dims() - prong_hole_dims
+                effects_dims - prong_hole_dims
             ) square(prong_hole_dims);
         }
     }
@@ -948,17 +948,17 @@ module everything() {
         // bt
         translate([0, 0, bt_buttoncap_height])
         bt_array()
-        buttoncap(button_dims(), button_thickness);
+        buttoncap(button_dims, button_thickness);
 
         // fx
         translate([0, 0, fx_buttoncap_height])
         fx_array()
-        buttoncap(effects_dims(), button_thickness);
+        buttoncap(effects_dims, button_thickness);
 
         // st
         translate([0, 0, st_buttoncap_height])
         st_array()
-        buttoncap(start_dims(), button_thickness);
+        buttoncap(start_dims, button_thickness);
     }
 }
 
