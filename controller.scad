@@ -25,9 +25,8 @@ bt_center_to_st_center = 91.5;
 bt_center_to_fx_center = 82;
 bt_center_to_knob_center = 68;
 
-knob_diameter = 30;
-knob_disparity = 297;
-knob_motor_hole_diameter = 30;
+knob_hole_diameter = 24.4;
+knob_disparity = 359;
 
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
 height = 30;
@@ -40,7 +39,7 @@ right_margin = 25;
 // if true, everything will be laid out flat, to be used as the template for the
 // cut.
 // if false, everything will be laid out as if assembled
-dxf_view = false;
+dxf_view_mode = false;
 
 // above are the values you can alter
 
@@ -231,7 +230,7 @@ module knob_array( offset = true ) {
 }
 
 top_bottom_frame_dimensions =  [
-    left_margin + knob_diameter + knob_disparity + right_margin,
+    left_margin + knob_hole_diameter + knob_disparity + right_margin,
 
     front_margin + frame_thickness + st_side / 2 + bt_center_to_st_center
         + bt_center_to_fx_center + fx_width / 2 + frame_thickness + back_margin
@@ -322,15 +321,27 @@ module top_frame() {
 
         // prepare the button holes
         offset( delta = offset_val ) {
-            bt_array() button_rect();
+            bt_array(
+            ) square(
+                button_dims + [0, (frame_thickness) * 2],
+                true
+            );
 
-            fx_array() effects_rect();
+            fx_array(
+            ) square(
+                effects_dims + [0, (frame_thickness) * 2],
+                true
+            );
 
-            st_array() start_rect();
+            st_array(
+            ) square(
+                start_dims + [0, (frame_thickness) * 2],
+                true
+            );
         }
 
         // prepare the knob holes
-        knob_array() circle( d = knob_motor_hole_diameter );
+        knob_array() circle( d = knob_hole_diameter );
     }
 }
 
@@ -959,7 +970,7 @@ module buttoncap(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-module everything() {
+module assembled_view() {
     // position everything
     rainbow(sqrt(3) / 15, 0.5) {
         // top frame
@@ -1064,49 +1075,43 @@ module everything() {
 }
 
 module dxf_view() {
-        top_frame();
+    top_frame();
 
-        translate([0, -300])
-        bottom_frame();
+    translate([0, -300])
+    bottom_frame();
 
-        translate([-250, 0])
-        left_right_frame();
+    translate([-250, 0])
+    left_right_frame();
 
-        translate([-300, 0])
-        left_right_frame();
+    translate([-300, 0])
+    left_right_frame();
 
-        translate([0, 180])
-        front_frame();
+    translate([0, 180])
+    front_frame();
 
-        translate([0, 230])
-        back_frame();
+    translate([0, 230])
+    back_frame();
 
-        translate([0, 300])
-        bt_bridge_path();
+    translate([0, 300])
+    bt_bridge_path();
 
-        projection()
-        translate([0, 375])
-        linear_array([1, 2], [0, 50])
-        rotate(-90, [1, 0, 0])
-        bt_bridge_pillar();
+    translate([0, 375])
+    linear_array([1, 2], [0, 50])
+    bt_bridge_pillar();
 
-        translate([0, 550])
-        fx_bridge_path();
+    translate([0, 550])
+    fx_bridge_path();
 
-        projection()
-        translate([0, 525])
-        linear_array([2, 2], [60, 30])
-        fx_bridge_pillar();
+    translate([0, 475])
+    linear_array([2, 2], [60, 50])
+    fx_bridge_pillar();
 
-        projection()
-        translate([0, 525])
-        st_bridge_path();
+    translate([0, 600])
+    st_bridge_path();
 
-        projection()
-        translate([0, 675])
-        linear_array([2, 1], [50, 0])
-        rotate(-90, [1, 0, 0])
-        st_bridge_pillar();
+    translate([0, 675])
+    linear_array([2, 1], [50, 0])
+    st_bridge_pillar();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1154,5 +1159,10 @@ Heirarchy of needs:
         > Number of discs to be used given a thickness
 */
 
-everything();
-//dxf_view();
+if (dxf_view_mode) {
+    dxf_view();
+}
+
+else {
+    assembled_view();
+}
