@@ -29,17 +29,15 @@ knob_hole_diameter = 24.4 + 0.125;
 knob_disparity = 359;
 
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
-height = 30;
+height = 32.5;
 
-front_margin = 25;
-back_margin = 25;
-left_margin = 25;
-right_margin = 25;
+fb_margin = 20;
+lr_margin = 20;
 
 // if true, everything will be laid out flat, to be used as the template for the
 // cut.
 // if false, everything will be laid out as if assembled
-dxf_view_mode = false;
+dxf_view_mode = true;
 
 // above are the values you can alter
 
@@ -49,10 +47,10 @@ dxf_view_mode = false;
 
 // on this section lies the supporting derived parameter
 
-mm_per_inch = 25.4;
-acrylic_density = 1.18; // grams per cubic centimeter
-cherry_frame_to_max_plunge = (0.46 - 0.2) * mm_per_inch;
-cherry_plunge_depth = 0.14 * mm_per_inch;
+developer_holes = false;
+
+cherry_frame_to_max_plunge = (0.46 - 0.2) * mm_per_inch();
+cherry_plunge_depth = 0.14 * mm_per_inch();
 
 bridge_cherry_height = frame_thickness - button_thickness - cherry_frame_to_max_plunge;
 bridge_height = bridge_cherry_height - frame_thickness;
@@ -76,21 +74,6 @@ function vert_prong_hole(plunge_distance) = [
 function vert_prong_hole_offset(plunge_distance) =
     snap_fit_scale[1] * 10 / 11 +
     vert_prong_hole(plunge_distance)[1];
-
-max_x = max(
-    st_side / 2,
-    (knob_disparity + knob_hole_diameter) / 2,
-    (bt_center_disparity * 3 + bt_side) / 2,
-    (fx_center_disparity + fx_length) / 2
-);
-
-max_y = max(
-    bt_center_to_st_center + st_side / 2
-);
-
-min_y = - max(
-    bt_center_to_fx_center + fx_width / 2
-);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -245,15 +228,10 @@ module knob_array( offset = true ) {
 }
 
 top_bottom_frame_dimensions = [
-    left_margin + knob_hole_diameter + knob_disparity + right_margin,
+    knob_hole_diameter + knob_disparity + lr_margin * 2,
 
-    front_margin + frame_thickness + st_side / 2 + bt_center_to_st_center
-        + bt_center_to_fx_center + fx_width / 2 + frame_thickness + back_margin
-];
-
-top_bottom_frame_offset = [
-    0,
-    max_y + min_y
+    frame_thickness + st_side / 2 + bt_center_to_st_center + fb_margin * 2
+        + bt_center_to_fx_center + fx_width / 2 + frame_thickness
 ];
 
 left_right_frame_dimensions = [
@@ -280,7 +258,7 @@ module front_back_frame_rect() {
     square(front_back_frame_dimensions, true);
 }
 
-module bottom_frame() {
+module basic_top_bottom_frame() {
     clean_flashes()
     difference() {
         // create the frame rectangle
@@ -295,6 +273,12 @@ module bottom_frame() {
             2,
             true
         );
+    }
+}
+
+module bottom_frame() {
+    difference() {
+        basic_top_bottom_frame();
 
         // create the bt pillar holes
         bt_array(
@@ -328,6 +312,14 @@ module bottom_frame() {
             [st_side / 3, frame_thickness],
             true
         );
+
+        // create the arduino uno screw holes
+        translate([
+            st_side / 2 - 62.5,
+            top_bottom_frame_dimensions[1] / 2 - 70
+        ]) rotate(0, [0, 0, 1])
+        mirror([1, 0, 0])
+        arduino_uno_screw_holes();
     }
 }
 
@@ -335,9 +327,7 @@ module top_frame() {
     offset_val = bt_allowance;
 
     difference() {
-        // why are you even going to write everything again? just use the bottom
-        // frame
-        bottom_frame();
+        basic_top_bottom_frame();
 
         // prepare the button holes
         offset( delta = offset_val ) {
@@ -361,7 +351,35 @@ module top_frame() {
         }
 
         // prepare the knob holes
-        knob_array() circle( d = knob_hole_diameter );
+        knob_array() high_def_circle( knob_hole_diameter );
+
+        // developer holes only
+        if (developer_holes) {
+            // bottom left
+            translate(-top_bottom_frame_dimensions / 2)
+            square(5);
+
+            // top left
+            translate([
+                -top_bottom_frame_dimensions[0] / 2,
+                top_bottom_frame_dimensions[1] / 2 - 5
+            ])
+            square(5);
+
+            // top right
+            translate([
+                top_bottom_frame_dimensions[0] / 2 - 5,
+                top_bottom_frame_dimensions[1] / 2 - 5
+            ])
+            square(5);
+
+            // bottom right
+            translate([
+                top_bottom_frame_dimensions[0] / 2 - 5,
+                -top_bottom_frame_dimensions[1] / 2
+            ])
+            square(5);
+        }
     }
 }
 
@@ -381,8 +399,10 @@ module left_right_frame() {
             );
         }
 
-        // prepare the strap holes
-        // TODO: where are the strap holes?
+        // strap holes
+        linear_array([2, 1], [10, 0], [true, true])
+        rotate(90, [0, 0, 1])
+        oblong(2.5, 35);
     }
 }
 
@@ -404,8 +424,7 @@ module front_frame() {
     difference() {
         back_frame();
 
-        // prepare the cord hole
-        // TODO: where's the cord hole?
+        high_def_circle(15);
     }
 }
 
@@ -451,7 +470,7 @@ module bt_bridge_pillar() {
             0,
             bridge_height + frame_thickness / 2,
         ]) square([
-            bt_side / 3,
+            bt_side / 2,
             frame_thickness,
         ], true);
 
@@ -470,6 +489,10 @@ module bt_bridge_pillar() {
                 -vert_prong_hole_offset(bt_plunge_distance)
             ]) square(vph);
         };
+
+        // add a hole in the middle so wires can pass through the center
+        translate([0, -height / 2])
+        high_def_circle(15);
     }
 }
 
@@ -488,7 +511,7 @@ module bt_bridge_path() {
                 0,
                 (bt_side + frame_thickness) / 2
             ]) square([
-                bt_side / 3,
+                bt_side / 2,
                 frame_thickness + bt_allowance * 2,
             ], true);
         }
@@ -589,7 +612,7 @@ module fx_bridge_pillar() {
             0,
             bridge_height + frame_thickness / 2,
         ]) square([
-            fx_length / 3,
+            fx_length / 2,
             frame_thickness
         ], true);
 
@@ -622,7 +645,7 @@ module fx_bridge_path() {
             0,
             (fx_width + frame_thickness) / 2
         ]) square([
-            fx_length / 3,
+            fx_length / 2,
             frame_thickness + bt_allowance * 2,
         ], true);
 
@@ -707,7 +730,7 @@ module st_bridge_pillar() {
             0,
             bridge_height + frame_thickness / 2,
         ]) square(
-            [st_side / 3, frame_thickness],
+            [st_side / 2, frame_thickness],
             true
         );
 
@@ -739,7 +762,7 @@ module st_bridge_path() {
             0,
             (st_side + frame_thickness) / 2
         ]) square([
-            st_side / 3,
+            st_side / 2,
             frame_thickness + bt_allowance * 2,
         ], true);
 
@@ -1132,52 +1155,11 @@ module dxf_view() {
     translate([0, 675])
     linear_array([2, 1], [50, 0])
     st_bridge_pillar();
+
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-/*
-Heirarchy of needs:
-
-> Controller
-    > Top frame
-        > BT hole
-        > FX hole
-        > ST hole
-        > Finger joints (extruding)
-            > Side
-            > Corner
-    > Front frame
-        > Finger joints (extruding)
-        > Cord hole
-    > Back frame
-        > Finger joints (extruding)
-    > Left frame
-        > Finger joints (extruding)
-        > Strap hole
-    > Right frame
-        > Finger joints (extruding)
-        > Strap hole
-    > Bottom frame
-        > Finger joints (extruding)
-        > Holes for the bridges
-    > Button bridges
-        > Bridge
-        > Pillars
-        > Cross lap
-        > Cherry holes
-    > Buttons
-        ! Finger joints (intruding)
-        ! Creating the snap-fit joints
-        ! Height consideration of the button given thickness, under thickness,
-          Cherry MX height, etc.
-        > BT
-        > FX
-        > ST
-    > Knobs
-        > Disc bridge
-        > Number of discs to be used given a thickness
-*/
 
 if (dxf_view_mode) {
     dxf_view();

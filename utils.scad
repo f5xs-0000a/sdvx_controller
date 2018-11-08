@@ -1,12 +1,9 @@
-mm_per_inch = 25.4;
-
-////////////////////////////////////////////////////////////////////////////////
+function mm_per_inch() = 25.4;
+function acrylic_density() = 1.18; // grams per cubic centimeter
 
 // Creates the geometry for the hole where the Cherry MX keys would be mounted
 // on
 module cherry_hole() {
-    mm_per_inch = 25.4;
-
     // cherry hole sounds lewd...
     
     // reference based on http://i.imgur.com/FeggbO6.png
@@ -25,9 +22,9 @@ module cherry_hole() {
     
     // scale from mm to inches
     scale(
-        mm_per_inch,
-        mm_per_inch,
-        mm_per_inch
+        mm_per_inch(),
+        mm_per_inch(),
+        mm_per_inch()
     ) {
         // make sure the center centers to the origin
         polygon([
@@ -142,7 +139,7 @@ module cherry_mockup() {
     B = 0.46;
     UB = B - 0.2;
 
-    scale(mm_per_inch) {
+    scale(mm_per_inch()) {
         // plunger
         translate([0, 0, UB])
         linear_extrude(P)
@@ -187,5 +184,44 @@ module linear_array(
                 children();
             }
         }
+    }
+}
+
+module high_def_circle(diameter, definition = 256) {
+    scale(1 / definition)
+    circle(d = diameter * definition);
+}
+
+module arduino_uno_screw_holes() {
+    // coordinates are in inches; they will be scaled to mm later
+    screw_1 = [0.55, 0.1];
+    screw_2 = screw_1 + [2.05, 0.2];
+    screw_3 = screw_2 + [0, 1.1];
+    screw_4 = screw_3 + [-2, 0.6];
+
+    scale(mm_per_inch()) {
+        translate(screw_1)
+        high_def_circle(0.125);
+
+        translate(screw_2)
+        high_def_circle(0.125);
+
+        translate(screw_3)
+        high_def_circle(0.125);
+
+        translate(screw_4)
+        high_def_circle(0.125);
+    }
+}
+
+module oblong(diameter, length) {
+    union() {
+        translate([-length / 2, 0])
+        high_def_circle(diameter);
+
+        translate([length / 2, 0])
+        high_def_circle(diameter);
+
+        square([length, diameter], true);
     }
 }
