@@ -30,7 +30,7 @@ knob_disparity = 297;
 knob_motor_hole_diameter = 30;
 
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
-height = 35;
+height = 30;
 
 front_margin = 25;
 back_margin = 25;
@@ -365,14 +365,14 @@ module bt_bridge_pillar() {
                 (bt_center_disparity - bt_side) / 2
             ) translate([
                 0,
-                -(height - frame_thickness)
-            ]) bt_strips(height - frame_thickness);
+                -height
+            ]) bt_strips(height);
 
             // the finger extrusions towards the bottom frame
             bt_array(
             ) translate([
                 0,
-                -(height - frame_thickness / 2)
+                -height - frame_thickness / 2
             ]) square([bt_side / 3, frame_thickness], true);
         };
 
@@ -498,9 +498,9 @@ module fx_bridge_pillar() {
             // main body of the pillar
             translate([
                 0,
-                -(height - frame_thickness) / 2
+                -height / 2
             ]) square(
-                [fx_length + frame_thickness * 2, height - frame_thickness],
+                [fx_length + frame_thickness * 2, height],
                 true
             );
 
@@ -513,7 +513,7 @@ module fx_bridge_pillar() {
             // the finger extrusions towards the bottom frame
             translate([
                 0,
-                -(height - frame_thickness / 2)
+                -height - frame_thickness / 2
             ]) square([bt_side / 3, frame_thickness], true);
         }
 
@@ -618,6 +618,7 @@ module fx_bridge() {
 }
 
 module st_bridge_pillar() {
+    /*
     rotate(
         90,
         [1, 0, 0]
@@ -627,20 +628,58 @@ module st_bridge_pillar() {
     ]) linear_extrude(
         height = frame_thickness
     ) square([st_side + frame_thickness * 2, height + frame_thickness], true);
-}
+    */
 
-module northern_st_bridge_pillar() {
-    translate([
-        0,
-        bt_center_to_st_center + st_side / 2 + frame_thickness
-    ]) st_bridge_pillar();
-}
+    difference() {
+        join_close_objects() {
+            // main body of the pillar
+            translate([
+                0,
+                -height / 2,
+            ]) square(
+                [st_side + frame_thickness * 2, height],
+                true
+            );
+            
+            // the finger extrusions towards the top of the frame
+            translate([
+                0,
+                frame_thickness / 2
+            ]) square([st_side, frame_thickness], true);
 
-module southern_st_bridge_pillar() {
-    translate([
-        0,
-        bt_center_to_st_center - st_side / 2
-    ]) st_bridge_pillar();
+            // the finger extrusions towards the bottom frame
+            translate([
+                0,
+                -height - frame_thickness / 2
+            ]) square([st_side / 3, frame_thickness], true);
+        }
+
+        // add the hole for the fingers of the bridge path
+        translate([
+            0,
+            bridge_height + frame_thickness / 2,
+        ]) square(
+            [st_side / 3, frame_thickness],
+            true
+        );
+
+        // add the vertical hole for the snap fit prongs
+        offset(
+            delta = bt_allowance
+        ) {
+            vph = vert_prong_hole(fx_plunge_distance);
+
+            translate([
+                st_side / 2 - vph[0],
+                -vert_prong_hole_offset(st_plunge_distance)
+            ]) square(vph);
+
+            translate([
+                -st_side / 2,
+                -vert_prong_hole_offset(st_plunge_distance)
+            ]) square(vph);
+        }
+    }
 }
 
 module st_bridge_path() {
@@ -660,8 +699,21 @@ module st_bridge_path() {
 }
 
 module st_bridge() {
-    northern_st_bridge_pillar();
-    southern_st_bridge_pillar();
+    // bridge pillars
+    st_array(
+    ) translate([
+        0,
+        -st_side / 2 - bt_allowance
+    ]) linear_array(
+        [1, 2],
+        [0, st_side + frame_thickness + bt_allowance * 2]
+    ) rotate(
+        90,
+        [1, 0, 0]
+    ) linear_extrude(
+        height = frame_thickness
+    ) st_bridge_pillar();
+
     st_bridge_path();
 }
 
