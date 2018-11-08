@@ -349,7 +349,7 @@ module bt_strips(height = frame_thickness) {
     ) translate([
         0,
         height / 2
-    ]) square([frame_thickness * 2 + bt_side, height], true);
+    ]) square([bt_side, height], true);
 }
 
 module bt_bridge_pillar() {
@@ -363,14 +363,18 @@ module bt_bridge_pillar() {
             // join_close_objects()
             join_close_objects(
                 (bt_center_disparity - bt_side) / 2
+            ) bt_array(
             ) translate([
                 0,
-                -height
-            ]) bt_strips(height);
+                -height / 2
+            ]) square(
+                [bt_side + frame_thickness * 2, height],
+                true
+            );
 
             // the finger extrusions towards the bottom frame
-            bt_array(
-            ) translate([
+            bt_array()
+            translate([
                 0,
                 -height - frame_thickness / 2
             ]) square([bt_side / 3, frame_thickness], true);
@@ -433,7 +437,7 @@ module bt_bridge_path() {
                 (bt_center_disparity - bt_side) / 2
             ) bt_array(
             ) square(
-                button_dims + 2 * [bt_allowance, bt_allowance],
+                button_dims + [bt_allowance, bt_allowance] * 2,
                 true
             );
 
@@ -449,7 +453,7 @@ module bt_bridge_path() {
                 delta = bt_allowance
             ) linear_array(
                 [2, 2],
-                prong_hole_dims - button_dims
+                button_dims - prong_hole_dims
             ) square(prong_hole_dims);
         }
     }
@@ -480,7 +484,7 @@ module bt_bridge() {
 }
 
 module fx_strips() {
-    square([frame_thickness * 2 + fx_length, frame_thickness], true);
+    square([fx_length, frame_thickness], true);
 }
 
 module fx_single_strip_hack() {
@@ -542,39 +546,33 @@ module fx_bridge_pillar() {
 }
 
 module fx_bridge_path() {
-    width = fx_width ;// + frame_thickness * 2;
-
     join_close_objects() {
-        fx_array() {
-            // fingers, front and back
-            // the linear array creates the two fingers
-            // TODO: math doesn't check out.
-            linear_array(
-                [1, 2],
-                [0, - (fx_width + frame_thickness)]
-            ) translate([
-                0,
-                (fx_width + frame_thickness) / 2
-            ]) square([
-                fx_length / 3,
-                frame_thickness + bt_allowance * 2,
-            ], true);
-        }
+        // fingers, front and back
+        // the linear array creates the two fingers
+        // TODO: math doesn't check out.
+        linear_array(
+            [1, 2],
+            [0, - (fx_width + frame_thickness)]
+        ) translate([
+            0,
+            (fx_width + frame_thickness) / 2
+        ]) square([
+            fx_length / 3,
+            frame_thickness + bt_allowance * 2,
+        ], true);
 
         // bridge path
         difference() {
             // the actual bridge
-            fx_array(
-            ) square(
-                effects_dims + [bt_allowance * 2, bt_allowance * 2],
+            square(
+                effects_dims + [bt_allowance, bt_allowance] * 2,
                 true
             );
 
             // the cherry holes
-            fx_array() cherry_hole();
+            cherry_hole();
 
             // the leg holes
-            fx_array()
             translate(
                 -effects_dims / 2
             ) offset(
@@ -604,6 +602,7 @@ module fx_bridge() {
     ) fx_bridge_pillar();
 
     // bridge path
+    fx_array()
     translate([
         0,
         0,
@@ -665,19 +664,43 @@ module st_bridge_pillar() {
 }
 
 module st_bridge_path() {
-    width = fx_width + frame_thickness * 2;
+    join_close_objects() {
+        // fingers, front and back
+        // the linear array creates the two fingers
+        linear_array(
+            [1, 2],
+            [0, - (st_side + frame_thickness)]
+        ) translate([
+            0,
+            (st_side + frame_thickness) / 2
+        ]) square([
+            st_side / 3,
+            frame_thickness + bt_allowance * 2,
+        ], true);
 
-    translate([
-        0,
-        bt_center_to_st_center + st_side / 2 - frame_thickness * 2,
-        bridge_height,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) difference() {
-        square(st_side + frame_thickness * 2, true);
+        // bridge path
+        difference() {
+            // the actual bridge
+            square(
+                start_dims + [bt_allowance, bt_allowance] * 2,
+                true
+            );
 
-        st_array(false) cherry_hole();
+            // the cherry holes
+            cherry_hole();
+
+            // the leg holes
+            translate(
+                -start_dims / 2
+            ) offset(
+                delta = bt_allowance
+            ) linear_array(
+                [2, 2],
+                start_dims - prong_hole_dims
+            ) square(prong_hole_dims);
+        }
     }
+
 }
 
 module st_bridge() {
@@ -696,7 +719,15 @@ module st_bridge() {
         height = frame_thickness
     ) st_bridge_pillar();
 
-    st_bridge_path();
+    // bridge path
+    st_array()
+    translate([
+        0,
+        0,
+        bridge_height,
+    ]) linear_extrude(
+        height = frame_thickness
+    ) st_bridge_path();
 }
 
 module standard_snap_fit_prong() {
@@ -983,7 +1014,7 @@ module everything() {
         // st bridge
         st_bridge();
 
-        translate([0, 0, bridge_cherry_height]) bt_array() cherry_mockup();
+        //translate([0, 0, bridge_cherry_height]) bt_array() cherry_mockup();
         
         // bt
         translate([0, 0, bt_buttoncap_height])
