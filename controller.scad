@@ -25,7 +25,7 @@ bt_center_to_st_center = 91.5;
 bt_center_to_fx_center = 82;
 bt_center_to_knob_center = 68;
 
-knob_hole_diameter = 24.4;
+knob_hole_diameter = 24.4 + 0.125;
 knob_disparity = 359;
 
 bt_allowance = 0.5; // used for the gap for the button to reduce friction
@@ -76,6 +76,21 @@ function vert_prong_hole(plunge_distance) = [
 function vert_prong_hole_offset(plunge_distance) =
     snap_fit_scale[1] * 10 / 11 +
     vert_prong_hole(plunge_distance)[1];
+
+max_x = max(
+    st_side / 2,
+    (knob_disparity + knob_hole_diameter) / 2,
+    (bt_center_disparity * 3 + bt_side) / 2,
+    (fx_center_disparity + fx_length) / 2
+);
+
+max_y = max(
+    bt_center_to_st_center + st_side / 2
+);
+
+min_y = - max(
+    bt_center_to_fx_center + fx_width / 2
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -229,11 +244,16 @@ module knob_array( offset = true ) {
     ) children();
 }
 
-top_bottom_frame_dimensions =  [
+top_bottom_frame_dimensions = [
     left_margin + knob_hole_diameter + knob_disparity + right_margin,
 
     front_margin + frame_thickness + st_side / 2 + bt_center_to_st_center
         + bt_center_to_fx_center + fx_width / 2 + frame_thickness + back_margin
+];
+
+top_bottom_frame_offset = [
+    0,
+    max_y + min_y
 ];
 
 left_right_frame_dimensions = [
