@@ -393,13 +393,11 @@ module bt_bridge_pillar() {
         ) {
             vph = vert_prong_hole(bt_plunge_distance);
 
-            translate([
-                bt_side / 2 - vph[0],
-                -vert_prong_hole_offset(bt_plunge_distance)
-            ]) square(vph);
-
-            translate([
-                -(bt_side / 2),
+            linear_array(
+                [2, 1],
+                [bt_side - vph[0], 0]
+            ) translate([
+                -bt_side / 2,
                 -vert_prong_hole_offset(bt_plunge_distance)
             ]) square(vph);
         };
@@ -532,14 +530,12 @@ module fx_bridge_pillar() {
         ) {
             vph = vert_prong_hole(fx_plunge_distance);
 
-            translate([
-                fx_length / 2 - vph[0],
+            linear_array(
+                [2, 1],
+                [fx_length - vph[0], 0]
+            ) translate([
+                -fx_length / 2,
                 -vert_prong_hole_offset(fx_plunge_distance)
-            ]) square(vph);
-
-            translate([
-                -(fx_length / 2),
-                -vert_prong_hole_offset(bt_plunge_distance)
             ]) square(vph);
         };
     }
@@ -618,18 +614,6 @@ module fx_bridge() {
 }
 
 module st_bridge_pillar() {
-    /*
-    rotate(
-        90,
-        [1, 0, 0]
-    ) translate([
-        0,
-        -(height - frame_thickness) / 2,
-    ]) linear_extrude(
-        height = frame_thickness
-    ) square([st_side + frame_thickness * 2, height + frame_thickness], true);
-    */
-
     difference() {
         join_close_objects() {
             // main body of the pillar
@@ -667,14 +651,12 @@ module st_bridge_pillar() {
         offset(
             delta = bt_allowance
         ) {
-            vph = vert_prong_hole(fx_plunge_distance);
+            vph = vert_prong_hole(st_plunge_distance);
 
-            translate([
-                st_side / 2 - vph[0],
-                -vert_prong_hole_offset(st_plunge_distance)
-            ]) square(vph);
-
-            translate([
+            linear_array(
+                [2, 1],
+                [st_side - vph[0], 0]
+            ) translate([
                 -st_side / 2,
                 -vert_prong_hole_offset(st_plunge_distance)
             ]) square(vph);
@@ -915,6 +897,7 @@ module buttoncap(
 module everything() {
     // position everything
     rainbow(sqrt(3) / 15, 0.5) {
+        /*
         // top frame
         linear_extrude(
             height = frame_thickness
@@ -989,6 +972,7 @@ module everything() {
         ]) linear_extrude(
             height = frame_thickness
         ) back_frame();
+        */
 
         // bt bridge
         bt_bridge();
