@@ -262,17 +262,51 @@ module front_back_frame_rect() {
 }
 
 module bottom_frame() {
-    // prepare the frame with the fingers
-    //clean_flashes()
+    clean_flashes()
     difference() {
+        // create the frame rectangle
         offset(
             delta = frame_thickness
         ) top_bottom_frame_rect();
 
+        // create the fingers
         side_fingers(
             top_bottom_frame_dimensions,
             frame_thickness,
             2,
+            true
+        );
+
+        // create the bt pillar holes
+        bt_array(
+        ) linear_array(
+            [1, 2],
+            [0, bt_side + frame_thickness + bt_allowance * 2],
+            [false, true]
+        ) square(
+            [bt_side / 3, frame_thickness],
+            true
+        );
+
+        // create the fx pillar holes
+        fx_array(
+        ) linear_array(
+            [1, 2],
+            [0, fx_width + frame_thickness + bt_allowance * 2],
+            [false, true]
+        ) square(
+            [fx_length / 3, frame_thickness],
+            true
+        );
+        
+        // create the st pillar holes
+        st_array(
+        ) linear_array(
+            [1, 2],
+            [0, st_side + frame_thickness + bt_allowance * 2],
+            [false, true]
+        ) square(
+            [st_side / 3, frame_thickness],
             true
         );
     }
@@ -516,7 +550,7 @@ module fx_bridge_pillar() {
             translate([
                 0,
                 -height - frame_thickness / 2
-            ]) square([bt_side / 3, frame_thickness], true);
+            ]) square([fx_length / 3, frame_thickness], true);
         }
 
         // add the hole for the fingers of the bridge path
@@ -928,7 +962,6 @@ module buttoncap(
 module everything() {
     // position everything
     rainbow(sqrt(3) / 15, 0.5) {
-        /*
         // top frame
         linear_extrude(
             height = frame_thickness
@@ -1003,7 +1036,6 @@ module everything() {
         ]) linear_extrude(
             height = frame_thickness
         ) back_frame();
-        */
 
         // bt bridge
         bt_bridge();
@@ -1014,8 +1046,6 @@ module everything() {
         // st bridge
         st_bridge();
 
-        //translate([0, 0, bridge_cherry_height]) bt_array() cherry_mockup();
-        
         // bt
         translate([0, 0, bt_buttoncap_height])
         bt_array()
