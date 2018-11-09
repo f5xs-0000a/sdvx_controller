@@ -10,21 +10,28 @@ include_button_border = false; // true is still unimplemented
 bt_side = 50;
 bt_count = 4;
 bt_center_disparity = 77;
-bt_plunge_distance = 4;
+bt_plunge_distance = 2.625;
+bt_guard_extrusion = 4;
 
 fx_length = 40.5;
 fx_width = 23.5;
 fx_count = 2;
 fx_center_disparity = 154; // TODO: this is always at the center of the BT's
-fx_plunge_distance = 3.6;
+fx_plunge_distance = 2.5;
+fx_guard_extrusion = 3.75;
 
 st_side = 25;
 st_plunge_distance = 3.6;
+st_guard_extrusion = 3.75;
 
 bt_center_to_st_center = 91.5;
 bt_center_to_fx_center = 82;
 bt_center_to_knob_center = 68;
 
+knob_diameter = 30;
+knob_height = 22;
+knob_spindle_diameter = 2;
+knob_spindle_length = 5;
 knob_hole_diameter = 24.4 + 0.125;
 knob_disparity = 359;
 
@@ -37,7 +44,7 @@ lr_margin = 20;
 // if true, everything will be laid out flat, to be used as the template for the
 // cut.
 // if false, everything will be laid out as if assembled
-dxf_view_mode = true;
+dxf_view_mode = false;
 
 // above are the values you can alter
 
@@ -440,7 +447,7 @@ module bt_bridge_pillar() {
     difference() {
         join_close_objects() {
             // the finger extrusions towards the top frame
-            bt_strips();
+            bt_strips(frame_thickness + bt_guard_extrusion);
             
             // main body of the pillar
             // join the walls so that they are one contiguous piece using
@@ -486,7 +493,7 @@ module bt_bridge_pillar() {
                 [bt_side - vph[0], 0]
             ) translate([
                 -bt_side / 2,
-                -vert_prong_hole_offset(bt_plunge_distance)
+                -vert_prong_hole_offset(bt_plunge_distance) + bt_guard_extrusion
             ]) square(vph);
         };
 
@@ -833,9 +840,9 @@ module standard_snap_fit_prong() {
 
 module buttoncap(
     dims,
-    button_thickness
+    button_thickness,
+    dxf_view = false,
 ) {
-
     module buttoncap_top() {
         linear_extrude(
             height = button_thickness
@@ -971,44 +978,102 @@ module buttoncap(
         }
     }
 
-    // top
-    buttoncap_top();
+    if (!dxf_view) {
+        // top
+        buttoncap_top();
 
-    // left
-    translate([
-        -dims[0] / 2,
-        0
-    ]) mirror([
-        0,
-        1,
-        0,
-    ]) buttoncap_prong_side();
+        // left
+        translate([
+            -dims[0] / 2,
+            0
+        ]) mirror([
+            0,
+            1,
+            0,
+        ]) buttoncap_prong_side();
 
-    // right
-    translate([
-        dims[0] / 2 - button_thickness,
-        0
-    ]) buttoncap_prong_side();
+        // right
+        translate([
+            dims[0] / 2 - button_thickness,
+            0
+        ]) buttoncap_prong_side();
 
-    // front
-    translate([
-        0,
-        dims[1] / 2 - button_thickness,
-    ]) rotate(
-        90,
-        [0, 0, 1]
-    ) buttoncap_stub_side();
+        // front
+        translate([
+            0,
+            dims[1] / 2 - button_thickness,
+        ]) rotate(
+            90,
+            [0, 0, 1]
+        ) buttoncap_stub_side();
 
-    // back
-    translate([
-        0,
-        -dims[1] / 2,
-    ]) rotate(
-        90,
-        [0, 0, 1]
-    ) mirror([
-        0, 1, 0
-    ]) buttoncap_stub_side();
+        // back
+        translate([
+            0,
+            -dims[1] / 2,
+        ]) rotate(
+            90,
+            [0, 0, 1]
+        ) mirror([
+            0, 1, 0
+        ]) buttoncap_stub_side();
+    }
+
+    else {
+        // top
+        buttoncap_top();
+
+        // left
+        mirror([0, 0, 1])
+        rotate(90, [0, 1, 0])
+        buttoncap_prong_side();
+
+        // right
+        rotate(90, [0, 1, 0])
+        buttoncap_prong_side();
+
+        // front
+        buttoncap_stub_side();
+
+        // back
+        mirror([0, 1, 0]);
+        buttoncap_stub_side();
+    }
+}
+
+module knob_cylinder_array(direction = [0, 0, 1], extrude = true) {
+    function linear_mul(x, y) =
+        [ for (i = [0 : 1 : min(len(x), len(y)) - 1]) x[i] * y[i] ];
+
+    thicker_than_spindle = frame_thickness > knob_spindle_length;
+
+    holed_count = thicker_than_spindle
+        ? 1
+        : floor(knob_spindle_length / frame_thickness);
+
+    top_spindle_height = thicker_than_spindle
+        ? frame_thickness
+        : spindle_height;
+
+    cylinder_count_after_holed =
+        round((knob_height - top_spindle_height) / frame_thickness);
+
+    array_multiplier = [knob_diameter, knob_diameter, frame_thickness];
+
+    for (i = [0 : 1 : holed_count - 1]) {
+        linear_extrude(frame_thickness)
+        translate(linear_mul(array_multiplier, direction) * i)
+        difference() {
+            high_def_circle(knob_diameter);
+            high_def_circle(knob_spindle_diameter);
+        }
+    }
+
+    for (i = [holed_count : 1 : holed_count + cylinder_count_after_holed]) {
+        translate(linear_mul(array_multiplier, direction) * i)
+        linear_extrude(height = frame_thickness)
+        high_def_circle(knob_diameter);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1019,7 +1084,7 @@ module assembled_view() {
         // top frame
         linear_extrude(
             height = frame_thickness
-        ) top_frame();
+        ) ;//top_frame();
         
         // bottom frame
         translate([
@@ -1068,13 +1133,12 @@ module assembled_view() {
         ]) rotate(
             270,
             [1, 0]
-        )
-        translate([
+        ) translate([
             0,
             height / 2,
         ]) linear_extrude(
             height = frame_thickness
-        ) front_frame();
+        ) ;//front_frame();
 
         // back frame
         translate([
@@ -1101,7 +1165,7 @@ module assembled_view() {
         st_bridge();
 
         // bt
-        translate([0, 0, bt_buttoncap_height])
+        translate([0, 0, bt_buttoncap_height + bt_guard_extrusion])
         bt_array()
         buttoncap(button_dims, button_thickness);
 
@@ -1156,7 +1220,21 @@ module dxf_view() {
     linear_array([2, 1], [50, 0])
     st_bridge_pillar();
 
+    // bt
+    bt_array()
+    buttoncap(button_dims, button_thickness, true);
 
+    // fx
+    fx_array()
+    buttoncap(effects_dims, button_thickness, true);
+
+    // st
+    st_array()
+    buttoncap(start_dims, button_thickness, true);
+
+    // knob cylinders
+    linear_array([1, 2], [0, knob_diameter + 1])
+    knob_cylinder_array();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
