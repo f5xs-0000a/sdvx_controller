@@ -3,7 +3,7 @@
 
 button_thickness = 3; // for most intents and purposes, this CANNOT be greater
 // than 3
-frame_thickness = 6;
+frame_thickness = 3;
 button_design_acrylic_thickness = frame_thickness; // unimplemented
 
 include_button_border = false; // true is still unimplemented
@@ -1092,7 +1092,7 @@ module assembled_view() {
         // top frame
         linear_extrude(
             height = frame_thickness
-        ) top_frame();
+        ) ;// top_frame();
         
         // bottom frame
         translate([
@@ -1185,11 +1185,17 @@ module assembled_view() {
         // st
         translate([0, 0, st_buttoncap_height])
         st_array()
-        buttoncap(start_dims, button_thickness);
+        ;//buttoncap(start_dims, button_thickness);
 
         // knobs
+        translate([0, 0, frame_thickness])
         knob_array()
         knob_disk_array();
+
+        // mockups
+        bt_array() cherry_mockup();
+        fx_array() cherry_mockup();
+        st_array() cherry_mockup();
     }
 }
 
